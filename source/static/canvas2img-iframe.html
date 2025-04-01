@@ -1,0 +1,30 @@
+<html>
+    <body>
+        <iframe id="canvas2img" width="100px" height="100px" style="display: none;" src="./canvas2img.html"></iframe>
+    </body>
+    <script>
+        setInterval(()=>{
+            let ret = document.getElementById('canvas2img').contentWindow.postMessage(
+                JSON.stringify({callid:'callid:'+Date.now()+'-'+Math.random(),time:Date.now(),
+                xtype:'canvas2img',text:'您是好人:'+(new Date()).toLocaleString(),setting:{radio:0.4}}),'*')
+            console.log('send-iframe-msg-ret:',ret)
+        },1000)
+        async function showImage2(base64)
+        {
+            const image = document.createElementNS( 'http://www.w3.org/1999/xhtml', 'img' )
+            image.src =await base64
+            // image.style.width = '1000px'
+            // image.style.height= '300px'
+            document.body.appendChild(image)
+        }
+        window.addEventListener("message", function(e){
+            console.log('e.data:',e.data)
+            let xobj = JSON.parse(e.data)
+            if(xobj.xtype == 'canvas2img')
+            {
+                showImage2(xobj.base64)
+                console.log('used-time:',(Date.now()-xobj.time))
+            }
+        }, false);
+    </script>
+</html>

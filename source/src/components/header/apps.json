@@ -1,0 +1,93 @@
+[
+{
+    "title":"实时视聊",
+    "url":"/rtcchat",
+    "name":"rtcchat",
+    "logo":"static/images/apps/rtcchat.png",
+    "type":"url"
+},
+{
+    "title":"福刻FORK",
+    "url":"/fork",
+    "name":"fork",
+    "logo":"static/images/apps/fork.png",
+    "type":"url"
+},
+{
+    "title":"文件夹",
+    "url":"/folder",
+    "name":"dfolder",
+    "logo":"static/images/apps/dfolder.png",
+    "type":"url"
+},
+{
+    "title":"画图",
+    "url":"/design",
+    "name":"design",
+    "logo":"static/images/apps/design.png",
+    "type":"url"
+},
+{
+    "title":"2D智体应用",
+    "url":"/3d/creator",
+    "name":"creator",
+    "logo":"static/images/apps/mc.png",
+    "type":"url"
+},
+{
+    "title":"表单引擎",
+    "url":"/form",
+    "name":"xform",
+    "logo":"static/images/apps/xform.png",
+    "type":"url"
+},
+{
+    "title":"3D智体应用",
+    "url":"/3de",
+    "name":"xverse",
+    "logo":"static/images/apps/xverse.png",
+    "type":"url"
+},
+{
+    "title":"文档",
+    "url":"/xdoc",
+    "name":"xdoc",
+    "logo":"static/images/apps/xdoc.png",
+    "type":"url"
+},
+{
+    "title":"海报制作",
+    "url":"/fabric",
+    "name":"xfabric",
+    "logo":"static/images/apps/poster.png",
+    "type":"url"
+},
+{
+    "title":"手绘作品",
+    "url":"/xdraw",
+    "name":"xdraw",
+    "logo":"static/images/apps/xdraw.png",
+    "type":"url"
+},
+{
+    "title":"CAD",
+    "url":"/xcad",
+    "name":"xcad",
+    "logo":"static/images/apps/xcad.png",
+    "type":"url"
+},
+{
+    "title":"markdown",
+    "url":"/poster/markdown",
+    "name":"xmark",
+    "logo":"static/images/apps/xmark.png",
+    "type":"url"
+},
+{
+    "title":"地图标注",
+    "url":"/lm",
+    "name":"xlm",
+    "logo":"static/images/apps/xlm.png",
+    "type":"url"
+}
+]

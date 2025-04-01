@@ -1,0 +1,176 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <script src="js/axios.min.js"></script>
+        <script src="js/simple-signal-client.min.js"></script>
+        <script src="js/socket.io.min.js"></script>
+        <script src="js/jszip.min.js"></script>
+        <script src="js/FileSaver.js"></script>
+        <script src="js/rpc-client.js"></script>
+        <script src="js/DTNSManager.js"></script>
+        <script src="js/DownloadManager.js"></script>
+        <!-- <script src="js/image-db.js"></script> -->
+        <script src="js/icache-db.js"></script>
+        <script src="js/ifile-db.js"></script>
+        <script src="js/static/libs/current-device.min.js"></script>
+        <script src="js/static/libs/bs58.bundle.js"></script>
+        <!-- <script src="js/static/libs/bignumber.min.js"></script> -->
+        <script src="js/static/libs/eccryptojs.js"></script>
+        <script src="js/static/libs/key_util_eccryptojs.js"></script>
+        <script src="js/sign_util.js"></script>
+        <script src="js/static/str_filter.js"></script>
+    </head>
+    <body>
+        <center><h1>《pop-fastdown》</h1></center>
+        <br/>
+        <span>down-url：</span><input id="down_url"  value="" style="padding:5px;width:80%"><br/><br/>
+        <button onclick="start()">&nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp;download&nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp;</button>&nbsp; <span id="status"></span>&nbsp;
+        <!-- <button onclick="save()">&nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp;保存&nbsp; &nbsp; &nbsp;&nbsp; &nbsp; &nbsp;</button> -->
+    <script>
+        // window.onbeforeunload = function(){
+            
+        // }
+        if(location.href.indexOf('?')>0)
+        {
+            // console.log('purl-from:',encodeURIComponent('dtns://web3:jobs3d/file?filename=obj_filefile9g3uNKme'))
+            let purl = location.href.split('?')[1]
+            purl = decodeURIComponent(purl)
+            let downUrlEle = document.getElementById('down_url')
+            downUrlEle.setAttribute('value',purl)
+            console.log('purl:',purl)
+        }
+        window.g_ibapp_status_urls = ['https://groupbuying.opencom.cn:446/hosts']
+
+        window.g_tns_nslookup_url = 'https://static.yunapi.org/tns-urls.json'
+        window.g_turn_nslookup_url= 'https://static.yunapi.org/turn-urls.json'
+        window.g_static_dtns_network_nslookup_url= 'https://static.yunapi.org/static-dtns-network.json'
+        window.g_tns_default_url = 'https://groupbuying.opencom.cn:446'
+        window.g_phones_default_url='https://static.yunapi.org/phones.json'
+        window.g_dtns_nslookup_static_urls = ['http://static.dtns.forklist.opencom.cn','http://static.dtns.opencom.cn']//['http://static.dtns.nftlist.com.cn','http://static.dtns.forklist.nftlist.com.cn']
+
+        window.g_dtns_network_static_hosts = {
+            "dev.dtns":{
+                "turn_urls": [
+                    "turn:static.yunapi.org:3478"
+                ],
+                "tns_urls": [
+                    "http://dev.dtns.yunapi.org"
+                ],
+                "phones_urls": [
+                    "https://static.yunapi.org/phones.json"
+                ],
+                "network": "dev.dtns"
+            }
+        }
+        const ifileDb = new IFileIndexDB('ifiledb','ifilecache')
+        ifileDb.openDB()
+        window.ifileDb = ifileDb
+
+        // const filesDb = new IFileIndexDB('files-db','files-store',false,11);
+        // filesDb.openDB();
+        // window.filesDb = filesDb;
+        // console.log('filesDb:',filesDb)
+        // setTimeout(()=>{
+        //     // filesDb.clear()
+        //     // filesDb.deleteObjectStore()
+        // }
+        //     ,1000)
+
+        const iWalletDb = new IFileIndexDB('iwalletdb','iwalletcache')
+        iWalletDb.openDB()
+        window.iWalletDb = iWalletDb
+
+        const iSessionDb = new IFileIndexDB('isessiondb','isessioncache')
+        iSessionDb.openDB()
+        window.iSessionDb = iSessionDb
+        window.g_axios = axios
+        const dtnsManager = new DTNSManager()
+        window.g_dtnsManager = dtnsManager
+        async function queryUrls()
+        {
+            let tnsUrls = await
+            axios.get('https://static.yunapi.org/tns-urls.json')//?timestamp='+time_x+'&sign='+encodeURIComponent(time_sign_base64), )
+            window.g_tns_urls = tnsUrls ? tnsUrls.data :null
+
+            let turnUrls = await
+            axios.get('https://static.yunapi.org/turn-urls.json')//?timestamp='+time_x+'&sign='+encodeURIComponent(time_sign_base64), 
+            window.g_turn_urls = turnUrls ? turnUrls.data:null
+            console.log('g_tns_urls:',g_tns_urls,'g_turn_urls:',g_turn_urls)
+        }
+        // queryUrls()
+        // const roomMap = new Map()
+        window.g_dtnsManager = new DTNSManager()
+        window.g_downManager = new DownloadManager()
+        async function start(){
+            await queryUrls()
+            
+            let down_url = document.getElementById('down_url').value
+            console.log('down_url:',down_url)
+            if(!down_url || down_url.trim().length==0){
+                return alert('URL不能为空')
+            }
+            down_url = down_url.trim()
+            // let ret = await g_dtnsManager.run(down_url)
+            // console.log('g_dtnsManager-run-ret:',ret)
+            // if(ret && ret.fileInfo && ret.data)
+            // {
+            //     console.log('download success:',ret.fileInfo.filename,ret.data.length)
+            //     let client = await g_dtnsManager.connect(down_url)
+            //     client.downloadFileByBinary(ret.fileInfo.filename,ret.data)
+            // }
+            let client = await g_dtnsManager.connect(down_url)
+            while(!client.pingpong_flag) await client.sleep(300)
+            let beginTime = Date.now()
+            g_downManager.download(down_url,{user_id:localStorage.user_id,s_id:localStorage.s_id,file_kind:'file'},
+                async function(data){
+              console.log('g_downManager.download-file-data:',data,data.data,data.data.buffer)
+              if(data && data.data){
+                console.log('download----data-len:'+data.data.length)
+                let statusEle = document.getElementById('status')
+                let tips = data.fileInfo.filename+'（'+
+                        showSize(  data.fileInfo.size )+'）'
+                setTimeout(()=>statusEle.innerHTML =tips+ '[下载完成] 100% &nbsp;用时：'+ parseInt((Date.now()-beginTime)/1000)+'秒' ,1500)
+                // This.tips = '100%'
+                console.log('download success:',data.fileInfo.filename,data.data.length)
+                client.downloadFileByBinary(data.fileInfo.filename,data.data)
+              }
+            })
+
+            //显示进度
+            let last_size = 0 //记录上1秒的数据
+            setInterval(async ()=>{
+                let downloadManagerInfo = await g_downManager.getDownloadManagerInfo(down_url)
+                console.log('created-downloadManagerInfo:',downloadManagerInfo)
+                if(downloadManagerInfo && downloadManagerInfo.down_file_info)
+                {
+                    let statusEle = document.getElementById('status')
+                    downloadManagerInfo.down_recved_slice_size = downloadManagerInfo.down_recved_slice_size ? downloadManagerInfo.down_recved_slice_size :0
+                    let tips = Math.round( downloadManagerInfo.down_recved_slice_size*100.0 / downloadManagerInfo.down_file_info.size,2)+'%'
+                    let downloading =  '['+(downloadManagerInfo.down_flag ? '下载中':'暂停下载')+']'
+                    tips = Math.round( downloadManagerInfo.down_recved_slice_size*100.0 / downloadManagerInfo.down_file_info.size,2)+'%'
+                    // console.log('download-This.tips:',This.tips)
+                    let radio = ''
+                    let subSize = downloadManagerInfo.down_recved_slice_size - last_size
+                    if(subSize>=1024*1024)  radio =  Math.round((subSize)*1.0 / 1024 / 1024,2) +'MB/s'
+                    else if(subSize>1024)  radio =  Math.round((subSize)*1.0 / 1024,2) +'KB/s'
+                    else radio =  subSize +'B/s'
+                    last_size = downloadManagerInfo.down_recved_slice_size
+                    console.log('download-status:',tips,radio)
+                    statusEle.innerHTML = downloadManagerInfo.down_file_info.filename+'（'+
+                        showSize( downloadManagerInfo.down_file_info.size )+'）' +
+                        downloading+' '+tips+' &nbsp; '+radio
+                }
+            },1000)
+            
+        }
+        function showSize(len)
+        {
+            if(len>=1024*1024*1024)  return Math.round((len)*1.0 / 1024 / 1024 /1024,2) +'GB'
+            if(len>=1024*1024)  return Math.round((len)*1.0 / 1024 / 1024,2) +'MB'
+            else if(len>=1024)  return Math.round((len)*1.0 / 1024,2) +'KB'
+            else return len +'B'
+        }
+    </script>
+    </body>
+</html>

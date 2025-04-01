@@ -1,0 +1,50 @@
+<span onclick="start2()"><h1>启用</h1></span>
+<script src="./artyom.window.min.js"></script>
+<script>
+  async function start()
+  {
+    try{
+
+    const Jarvis = new Artyom();
+    await Jarvis.initialize({ lang: 'zh-CN',debug:false})
+    // Jarvis.say("Hello World 你好}世界!");
+    setInterval(()=>Jarvis.say('hello world 你好世界'),3000)
+    }
+    catch(ex){
+      alert('ex:'+ex)
+    }
+  }
+  async function start2()
+  {
+    try{
+    const Jarvis = new Artyom();
+    await Jarvis.initialize(
+        {
+        lang: 'zh-CN',// 设置语言为中国大陆中文 //"en-GB", // GreatBritain english
+        continuous: true, // Listen forever
+        soundex: true,// Use the soundex algorithm to increase accuracy
+        debug: true, // Show messages in the console
+        executionKeyword: "and do it now",
+        listen: true, // Start to listen commands !
+
+        // If providen, you can only trigger a command if you say its name
+        // e.g to trigger Good Morning, you need to say "Jarvis Good Morning"
+        // name: "Jarvis" 
+    })
+    Jarvis.say('hello world 你好世界')
+    Jarvis.on(['*'] , true).then((i,wildcard) => {
+        // alert('i:'+i+' '+wildcard)
+        console.log('wildcard:',wildcard,i)
+        if(wildcard == '开始。')// .startsWith('开始'))
+        {
+            console.log('开始：',i,wildcard)
+            Jarvis.say("您说了开始: " + wildcard);//
+        } 
+    });
+  }catch(ex){
+    alert('ex:'+ex)
+  }
+    // setInterval(()=>Jarvis.say('hello world 你好世界'),3000)
+    
+  }
+</script>

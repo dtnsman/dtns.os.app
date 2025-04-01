@@ -1,0 +1,9 @@
+{
+    "fintechsdk_API_KEY" : "*",
+    "fintechsdk_API_SECRET" : "*",
+    "fintechsdk_API_PASS" : "*",
+    "fintechsdk_BASE_URL" : "https://aws.okex.com/",
+    "fintechsdk_user":{"private_key":"WTBvRndSfWF5xtB7PLQm7ja8yLutKdtozQuWXakemtY",
+                        "public_key":"289wAyhsZm8gGVyZxC9tDYfwwxtThBpq7mGRwXtyhZa3w",
+                        "token":"dtns_qw1d0005K4edZyfxDmP7oaCjAHEQXHX2","web3name":"qw"}
+}

@@ -1,0 +1,122 @@
+<html>
+    <script src='./js/html2canvas.min.js'></script>
+    <body>
+        <div id="text"><font color="red">测试一下换行<br/>内容为红色</font></div>
+    <script>
+        const spanEle = document.createElement('span')
+        spanEle.innerHTML = '<font color="red">测试一下换行内容为红色</font>'//<br/>
+        document.body.appendChild(spanEle)
+        const textEle = document.getElementById('text')
+
+        let canvasEle = document.createElement('canvas')
+        // canvasEle.style.width='1000px'
+        // canvasEle.style.height='300px'
+        
+        let fontSize = 200
+        let ctx = canvasEle.getContext("2d");
+        let str = "Hello world我很好世界，不错的11111我不错的呢"//可以变长（内容）
+        let text = ctx.measureText(str);
+        canvasEle.setAttribute('width',fontSize/9 * text.width) //计算变长
+        canvasEle.setAttribute('height','200')
+        // alert('text:'+text.width)//得到text.width宽度
+        
+        ctx.font = fontSize+"px 微软雅黑";
+        // canvasEle.style.width = text.width+'px'
+        ctx.fillText(str, 10, fontSize+10);
+
+        function showImage(canvas)
+        {
+            let base64 = canvas.toDataURL('image/webp',0.9)
+            console.log('base64:',base64)
+            const image = document.createElementNS( 'http://www.w3.org/1999/xhtml', 'img' )
+            image.src = base64
+            // image.style.width = '1000px'
+            // image.style.height= '300px'
+            document.body.appendChild(image)
+        }
+
+        showImage(canvasEle)
+
+        async function showImage2(base64)
+        {
+            const image = document.createElementNS( 'http://www.w3.org/1999/xhtml', 'img' )
+            image.src =await base64
+            // image.style.width = '1000px'
+            // image.style.height= '300px'
+            document.body.appendChild(image)
+        }
+
+        window.g_3d_create_text_image =async function(input,setting)
+        {
+            try{
+            let beginTime = Date.now()
+            console.log('g_3d_create_text_image-text:',input)
+            let fontSize = 36
+            let fontColor='red'
+            let bgColor  ='white'
+            let radio = 1
+            if(setting)
+            {
+                fontSize = setting.size ? setting.size :fontSize
+                fontColor = setting.color ? setting.color :fontColor
+                bgColor   = setting.bgcolor ? setting.bgcolor :bgColor
+                radio     = setting.radio ? setting.radio :radio
+            }
+            let canvasEle = new OffscreenCanvas(1,1)//document.createElement('canvas')
+            let ctx = canvasEle.getContext('2d')// canvasEle.getContext("2d");
+            let str = input//可以变长（内容）
+            let text = ctx.measureText(str);
+            let width = fontSize/9 * text.width
+            width = width<fontSize+20 ? fontSize +20 :width
+            let height = width*radio
+
+            canvasEle = new OffscreenCanvas(width,height)//document.createElement('canvas')
+            ctx = canvasEle.getContext('2d')//
+            // canvasEle.setAttribute('width',width) //计算变长
+            // canvasEle.setAttribute('height',width)
+            // alert('text:'+text.width)//得到text.width宽度
+            
+            ctx.font = fontSize+"px 微软雅黑";
+            // canvasEle.style.width = text.width+'px'
+            ctx.fillStyle = bgColor
+            ctx.fillRect(0,0,width,height)
+            ctx.fillStyle = fontColor
+            ctx.fillText(str, 10, height/2);   //居中绘制
+            let blob =await canvasEle.convertToBlob({type:'image/webp',quality:0.9}) //toDataURL('image/webp',0.9)
+            var base64 = await new Promise((res)=>{
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    res(e.target.result);
+                }
+                reader.readAsDataURL(blob);
+            })
+            console.log('g_3d_create_text_image-base64:',base64)
+            alert('base64:',base64)
+            console.log('create-text-img-used-time:',(Date.now()-beginTime))
+            return base64
+            }catch(ex)
+            {
+                alert('ex:'+ex)
+            }
+        }
+
+        showImage2(g_3d_create_text_image('    时间：2024-05-16 18:02:56   ',{"size":60,"color":"black","bgcolor":"transparent","radio":0.4}))
+
+        let xtime = Date.now()
+        html2canvas(spanEle,{ scale:1}).then(function(canvas) {
+                        // document.bo1dy.appendChild(canvas);
+                        // let base64 = canvas.toDataURL('image/webp',0.9)
+                        // console.log('base64:',base64)
+                        // const image = document.createElementNS( 'http://www.w3.org/1999/xhtml', 'img' )
+                        // image.src = base64
+                        // // image.style.width = '1000px'
+                        // // image.style.height= '300px'
+                        // document.body.appendChild(image)
+                        showImage(canvas)
+                        spanEle.style.display='none'
+                        console.log('xtime:end:',(Date.now()-xtime))
+                    });
+        
+    </script>
+     </body>
+</html>

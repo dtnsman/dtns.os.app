@@ -1,0 +1,66 @@
+<html>
+
+
+<script>
+    window.g_3d_create_text_image =function(input,setting)
+    {
+        try{
+            let beginTime = Date.now()
+            console.log('g_3d_create_text_image-text:',input)
+            let fontSize = 36
+            let fontColor='red'
+            let bgColor  ='white'
+            let radio = 1
+            if(setting)
+            {
+                fontSize = setting.size ? setting.size :fontSize
+                fontColor = setting.color ? setting.color :fontColor
+                bgColor   = setting.bgcolor ? setting.bgcolor :bgColor
+                radio     = setting.radio ? setting.radio :radio
+            }
+            let canvasEle = document.createElement('canvas')
+            let ctx = canvasEle.getContext("2d");
+            let str = input//可以变长（内容）
+            let text = ctx.measureText(str);
+            let width = fontSize/9 * text.width
+            width = width<fontSize+20 ? fontSize +20 :width
+            let height = width*radio
+
+            // canvasEle = new OffscreenCanvas(width,height)//document.createElement('canvas')
+            // ctx = canvasEle.getContext('2d')//
+            canvasEle.setAttribute('width',width) //计算变长
+            canvasEle.setAttribute('height',height)
+            // alert('text:'+text.width)//得到text.width宽度
+            
+            ctx.font = fontSize+"px 微软雅黑";
+            // canvasEle.style.width = text.width+'px'
+            ctx.fillStyle = bgColor
+            ctx.fillRect(0,0,width,height)
+            ctx.fillStyle = fontColor
+            ctx.fillText(str, 10, height/2);   //居中绘制
+            let base64 =canvasEle.toDataURL('image/webp',0.9)
+            console.log('g_3d_create_text_image-base64:',base64)
+            console.log('create-text-img-used-time:',(Date.now()-beginTime))
+            return base64
+        }catch(ex)
+        {
+            alert('ex:'+ex)
+        }
+    }
+
+    window.addEventListener('message', async function(e)
+    {
+        console.log('e.data:',e.data,e)
+        let xobj = JSON.parse(e.data)
+        if(xobj.xtype = 'canvas2img')
+        {
+            let base64 = g_3d_create_text_image(xobj.text,xobj.setting)
+            xobj.base64 = base64
+            window.parent.postMessage(JSON.stringify(xobj),'*')
+        }
+    }, false);
+    // const xmsgObj = { xtype: 'dtns.xcad.creator2xcad', xmsg: 'from dtns.xcad.creator' };
+    // window.top.postMessage( JSON.stringify( xmsgObj ), '*' );
+</script>
+
+</html>

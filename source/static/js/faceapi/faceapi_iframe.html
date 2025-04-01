@@ -1,0 +1,47 @@
+<html>
+<script src="./face-api.min.js"></script>
+<script src="./faceapi-tool.js"></script>
+<script>
+    window.addEventListener('message', async function(e)
+    {
+        console.log('faceapi-iframe-e.data:',e.data,e)
+        let xobj = null;
+        try{
+           xobj =  JSON.parse(e.data)
+        }catch(ex)
+        {
+            console.log('faceapi-iframe-parse-json-ex:'+ex,ex)
+        }
+        console.log('faceapi-iframe-xobj:',xobj)
+        if(xobj.xtype == 'models')
+        {
+            let flag = await g_2d_faceapi_load_models()
+            xobj.flag = flag
+            window.parent.postMessage(JSON.stringify(xobj),'*')
+        }
+        else if(xobj.xtype == 'set_user')
+        {
+            console.log('faceapiIframe-g_2d_faceapi_user_set:',xobj)
+            let flag = await g_2d_faceapi_user_set(xobj.base64)
+            console.log('faceapiIframe-g_2d_faceapi_user_set:result:',flag)
+            xobj.flag = flag
+            window.parent.postMessage(JSON.stringify(xobj),'*')
+        }
+        else if(xobj.xtype == 'user_ok')
+        {
+            let flag = await g_2d_faceapi_user_ok()
+            xobj.flag = flag
+            window.parent.postMessage(JSON.stringify(xobj),'*')
+        }
+        else if(xobj.xtype == 'search')
+        {
+            let flag = await g_2d_faceapi_search(xobj.base64)
+            xobj.flag = flag
+            window.parent.postMessage(JSON.stringify(xobj),'*')
+        }
+    }, false);
+    // const xmsgObj = { xtype: 'dtns.xcad.creator2xcad', xmsg: 'from dtns.xcad.creator' };
+    // window.top.postMessage( JSON.stringify( xmsgObj ), '*' );
+</script>
+
+</html>

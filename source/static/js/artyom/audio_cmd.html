@@ -1,0 +1,203 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <script src="js/axios.min.js"></script>
+        <script src="js/simple-signal-client.min.js"></script>
+        <script src="js/socket.io.min.js"></script>
+        <script src="js/jszip.min.js"></script>
+        <script src="js/FileSaver.js"></script>
+        <script src="js/rpc-client.js"></script>
+        <script src="js/DTNSManager.js"></script>
+        <script src="js/DownloadManager.js"></script>
+        <!-- <script src="js/image-db.js"></script> -->
+        <script src="js/icache-db.js"></script>
+        <script src="js/ifile-db.js"></script>
+        <script src="js/current-device.min.js"></script>
+        <script src="js/bs58.bundle.js"></script>
+        <!-- <script src="js/static/libs/bignumber.min.js"></script> -->
+        <script src="js/eccryptojs.js"></script>
+        <script src="js/key_util_eccryptojs.js"></script>
+        <script src="js/sign_util.js"></script>
+        <script src="js/str_filter.js"></script>
+        <script src="./artyom.window.min.js"></script>
+    </head>
+    <body>
+        <center><h1>《语音指令》</h1></center>
+        <br/>
+        <span id="cmdlist"></span>
+    <script>
+        window.g_ibapp_status_urls = ['https://groupbuying.opencom.cn:446/hosts']
+
+        window.g_tns_nslookup_url = 'https://static.dtns.top/tns-urls.json'
+        window.g_turn_nslookup_url= 'https://static.dtns.top/turn-urls.json'
+        window.g_static_dtns_network_nslookup_url= 'https://static.dtns.top/static-dtns-network.json'
+        window.g_tns_default_url = 'https://groupbuying.opencom.cn:446'
+        window.g_phones_default_url='https://static.dtns.top/phones.json'
+        window.g_dtns_nslookup_static_urls = ['http://static.dtns.forklist.opencom.cn','http://static.dtns.opencom.cn']//['http://static.dtns.nftlist.com.cn','http://static.dtns.forklist.nftlist.com.cn']
+
+        window.g_dtns_network_static_hosts = {
+            "dev.dtns":{
+                "turn_urls": [
+                    "turn:static.dtns.top:3478"
+                ],
+                "tns_urls": [
+                    "http://dev.dtns.dtns.top"
+                ],
+                "phones_urls": [
+                    "https://static.dtns.top/phones.json"
+                ],
+                "network": "dev.dtns"
+            }
+        }
+        const ifileDb = new IFileIndexDB('ifiledb','ifilecache')
+        ifileDb.openDB()
+        window.ifileDb = ifileDb
+
+        const iWalletDb = new IFileIndexDB('iwalletdb','iwalletcache')
+        iWalletDb.openDB()
+        window.iWalletDb = iWalletDb
+
+        const iSessionDb = new IFileIndexDB('isessiondb','isessioncache')
+        iSessionDb.openDB()
+        window.iSessionDb = iSessionDb
+        window.g_axios = axios
+        const dtnsManager = new DTNSManager()
+        window.g_dtnsManager = dtnsManager
+        async function queryUrls()
+        {
+            let tnsUrls = await
+            axios.get('https://static.dtns.top/tns-urls.json')//?timestamp='+time_x+'&sign='+encodeURIComponent(time_sign_base64), )
+            window.g_tns_urls = tnsUrls ? tnsUrls.data :null
+
+            let turnUrls = await
+            axios.get('https://static.dtns.top/turn-urls.json')//?timestamp='+time_x+'&sign='+encodeURIComponent(time_sign_base64), 
+            window.g_turn_urls = turnUrls ? turnUrls.data:null
+            console.log('g_tns_urls:',g_tns_urls,'g_turn_urls:',g_turn_urls)
+        }
+        // queryUrls()
+        // const roomMap = new Map()
+        window.g_dtnsManager = new DTNSManager()
+        window.g_downManager = new DownloadManager()
+        async function start(){
+            await queryUrls()
+            
+            let client = await g_dtnsManager.connect('dtns://web3:svrdev')
+            while(!client.pingpong_flag) await client.sleep(300)
+           
+            start2()
+            
+        }
+        async function start2()
+        {
+            console.log('into start2')
+            try{
+                const Jarvis = new Artyom();
+                await Jarvis.initialize(
+                    {
+                    lang: 'zh-CN',// 设置语言为中国大陆中文 //"en-GB", // GreatBritain english
+                    continuous: true, // Listen forever
+                    soundex: true,// Use the soundex algorithm to increase accuracy
+                    debug: true, // Show messages in the console
+                    executionKeyword: "and do it now",
+                    listen: true, // Start to listen commands !
+
+                    // If providen, you can only trigger a command if you say its name
+                    // e.g to trigger Good Morning, you need to say "Jarvis Good Morning"
+                    // name: "Jarvis" 
+                })
+                Jarvis.say('hello world 你好世界')
+                Jarvis.on(['*'] , true).then(async (i,wildcard) => {
+                    // alert('i:'+i+' '+wildcard)
+                    console.log('wildcard:',wildcard,i)
+                    if(wildcard == '开始。')// .startsWith('开始'))
+                    {
+                        console.log('开始：',i,wildcard)
+                        Jarvis.say("您说了开始: " + wildcard);//
+                    } 
+                    else if(wildcard =='左转。' || wildcard.indexOf('左转')>0)
+                    {
+                        await g_dtnsManager.run('dtns://web3:svrdev/rtphone/xxx/action?action=left&timeout=1000')
+                    }
+                    else if(wildcard =='右转。'|| wildcard.indexOf('右转')>0)
+                    {
+                        await g_dtnsManager.run('dtns://web3:svrdev/rtphone/xxx/action?action=right&timeout=1000')
+                    }
+                    else if(wildcard =='前进。' || wildcard.indexOf('前进')>0)
+                    {
+                        await g_dtnsManager.run('dtns://web3:svrdev/rtphone/xxx/action?action=move&timeout=1000')
+                    }
+                    else if(wildcard =='后退。'  || wildcard.indexOf('后退')>0)
+                    {
+                        await g_dtnsManager.run('dtns://web3:svrdev/rtphone/xxx/action?action=back&timeout=1000')
+                    }
+
+                    else if(wildcard =='跳舞。'  || wildcard.indexOf('跳舞')>0)
+                    {
+                        let param = {channel:'rtrobot-channel',user_id:'user_8wSeyn7qNQsQEszf',s_id:'7c87bde384b57c9df445ab607b6a6dc0'}
+                        let fret = await g_dtnsManager.run('dtns://web3:svrdev/rtchannel/focus',param)
+                        console.log('focus-ret:',fret)
+                        param.xobj = JSON.stringify({'nothing':true})
+                        param.notify_type = 'dance'
+                        let sret = await g_dtnsManager.run('dtns://web3:svrdev/rtchannel/send',param)
+                        console.log('send-ret:',sret)
+                        if(sret && sret.ret) Jarvis.say('开始dance')
+                    }
+
+                    else if(wildcard =='旋风。'  || wildcard.indexOf('旋风舞步')>0 || wildcard.indexOf('舞步')>0)
+                    {
+                        let param = {channel:'rtrobot-channel',user_id:'user_8wSeyn7qNQsQEszf',s_id:'7c87bde384b57c9df445ab607b6a6dc0'}
+                        let fret = await g_dtnsManager.run('dtns://web3:svrdev/rtchannel/focus',param)
+                        console.log('focus-ret:',fret)
+                        param.xobj = JSON.stringify({'nothing':true})
+                        param.notify_type = 'dance_xf'
+                        let sret = await g_dtnsManager.run('dtns://web3:svrdev/rtchannel/send',param)
+                        console.log('send-ret:',sret)
+                        if(sret && sret.ret) Jarvis.say('开始旋风dance')
+                    }
+                    else if(wildcard.startsWith('执行指令'))
+                    {
+                        let opcode = wildcard.split('指令')[1].replace('。','')
+                        let param = {channel:'rtrobot-channel',user_id:'user_8wSeyn7qNQsQEszf',s_id:'7c87bde384b57c9df445ab607b6a6dc0'}
+                        let fret = await g_dtnsManager.run('dtns://web3:svrdev/rtchannel/focus',param)
+                        console.log('focus-ret:',fret)
+                        param.xobj = JSON.stringify({'nothing':true})
+                        param.notify_type = opcode == 'mov'||opcode == 'nov'||opcode == 'go' ||opcode == 'movie' ? 'move':opcode
+                        // opcode = opcode.indexOf('。')>=0 ? opcode.split('。')[0] :opcode
+                        let sret = await g_dtnsManager.run('dtns://web3:svrdev/rtchannel/send',param)
+                        console.log('send-ret:',sret)
+                        if(sret && sret.ret) Jarvis.say('开始指令：'+opcode)
+                    }
+                    else if(wildcard.startsWith('芝麻开门'))
+                    {
+                        let param = {channel:'rtrobot-channel',user_id:'user_AMJDAKcZwSf2ihAE',s_id:'d54ccc24e87b5219f751f0ccfe1a23d1'}
+                        let fret = await g_dtnsManager.run('dtns://web3:jobs3d/rtchannel/focus',param)
+                        console.log('focus-ret:',fret)
+                        param.xobj = JSON.stringify({'nothing':true})
+                        param.notify_type = 'open'
+                        let sret = await g_dtnsManager.run('dtns://web3:jobs3d/rtchannel/send',param)
+                        console.log('send-ret:',sret)
+                        if(sret && sret.ret) Jarvis.say('开门指令：'+param.notify_type )
+                    }
+                    else if(wildcard.startsWith('芝麻关门'))
+                    {
+                        let param = {channel:'rtrobot-channel',user_id:'user_AMJDAKcZwSf2ihAE',s_id:'d54ccc24e87b5219f751f0ccfe1a23d1'}
+                        let fret = await g_dtnsManager.run('dtns://web3:jobs3d/rtchannel/focus',param)
+                        console.log('focus-ret:',fret)
+                        param.xobj = JSON.stringify({'nothing':true})
+                        param.notify_type = 'close'
+                        let sret = await g_dtnsManager.run('dtns://web3:jobs3d/rtchannel/send',param)
+                        console.log('send-ret:',sret)
+                        if(sret && sret.ret) Jarvis.say('关门指令：'+param.notify_type )
+                    }
+                });
+            }catch(ex){
+                alert('ex:'+ex)
+            }
+            // setInterval(()=>Jarvis.say('hello world 你好世界'),3000)
+        }
+
+        start()
+    </script>
+    </body>
+</html>
