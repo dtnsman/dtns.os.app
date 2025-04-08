@@ -650,10 +650,10 @@
           // while(!imDb.db)  await rpc_client.sleep(100)
           let firstTimeFlag = false
           // firstTimeFlag =  rpc_client.client.peers().length<1
-          while(!rpc_client.client ||rpc_client.client.peers().length<1)
-          {
-            await rpc_client.sleep(50)
-          }
+          // while(!rpc_client.client ||rpc_client.client.peers().length<1)
+          // {
+          //   await rpc_client.sleep(50)
+          // }
           while(!rpc_client.pingpong_flag){
             firstTimeFlag =true
             await rpc_client.sleep(50)

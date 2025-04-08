@@ -2353,7 +2353,7 @@ export default {
       {
         localStorage.setItem('poster_type','DTNSNetwork')
         localStorage.setItem('poster_value',txt.indexOf(':') >0 ? txt.split(':')[1]:'')
-        this.$router.push('/poster/dtnsnetworkconfig')
+        return this.$router.push('/poster/dtnsnetworkconfig')
       }
       else if(txt.startsWith('fe'))
       {
@@ -2375,105 +2375,105 @@ export default {
 
         localStorage.setItem('poster_type','formengine')
         localStorage.setItem('poster_value',params[1])
-        this.$router.push('/poster/formengine')
+        return this.$router.push('/poster/formengine')
       }
       else if(txt == '3s' )
       {
         localStorage.setItem('poster_type','3s')
-        this.$router.push('/poster/3s')
+        return this.$router.push('/poster/3s')
       }
       else if(txt ==  'ibapp' || txt=='web3app')
       {
         localStorage.setItem('poster_type','ibapp')
-        this.$router.push('/poster/ibapp')
+        return this.$router.push('/poster/ibapp')
       }
       else if(txt ==  'appkey')
       {
         localStorage.setItem('poster_type','appkey')
-        this.$router.push('/poster/appkey')
+        return this.$router.push('/poster/appkey')
       }
       else if(txt == 'dweb' )
       {
-        this.$router.push('/dweb')
+        return this.$router.push('/dweb')
       }
       else if(txt == 'connect')
       {
-        this.$router.push('/connect')
+        return this.$router.push('/connect')
       }
       else if(txt == 'popview' || txt=='pv' )
       {
-        this.$router.push('/popview')
+        return this.$router.push('/popview')
       }
       else if(txt == 'minipaint' || txt=='mp' || txt=='de' || txt=='design' || txt=='pd' ) //用于产品设计领域
       {
-        this.$router.push('/design')
+        return this.$router.push('/design')
       }
       else if(txt == 'news' )
       {
         localStorage.setItem('poster_type','news')
-        this.$router.push('/poster/news')
+        return this.$router.push('/poster/news')
       }
       else if(txt == 'minicard' || txt=='mc' || txt=='ib3')
       {
         localStorage.setItem('poster_type','minicard')
-        this.$router.push('/poster/minicard')
+        return this.$router.push('/poster/minicard')
       }
       else if(txt == 'fork')
       {
-        this.$router.push('/fork')
+        return this.$router.push('/fork')
       }
       else if(['game','3d','3x','2x','creator','fx','face','pose','xverse','3dtest','fd','fastdown','dt' ,'devtools'].indexOf(txt)>=0)//'form',
       {
-        this.$router.push('/3d/'+txt)
+        return this.$router.push('/3d/'+txt)
       }
       else if(['form'].indexOf(txt)>=0)
       {
-        this.$router.push('/form')
+        return this.$router.push('/form')
       }
       else if(txt && txt.startsWith('搜索'))
       {
         localStorage.setItem('dweb-search-key',txt.replace('搜索 ',''))
-        this.$router.push('/dweb')
+        return this.$router.push('/dweb')
       }
       else if(['3de'].indexOf(txt)>=0)
       {
         window.g_now_start_3d_editor = true// fix the bug  （退出3d-editor后进入，须重新start）
-        this.$router.push('/3de')
+        return this.$router.push('/3de')
       }
       else if(['3dp'].indexOf(txt)>=0)
       {
-        this.$router.push('/3dp')
+        return this.$router.push('/3dp')
       }
       else if(['xdoc'].indexOf(txt)>=0)
       {
-        this.$router.push('/xdoc')
+        return this.$router.push('/xdoc')
       }
       else if(['fabric'].indexOf(txt)>=0)
       {
-        this.$router.push('/fabric')
+        return this.$router.push('/fabric')
       }
       else if(['xdraw'].indexOf(txt)>=0)
       {
-        this.$router.push('/xdraw')
+        return this.$router.push('/xdraw')
       }
       else if(['xcad'].indexOf(txt)>=0)
       {
-        this.$router.push('/xcad')
+        return this.$router.push('/xcad')
       }
       else if(['md','markdown'].indexOf(txt)>=0)
       {
         localStorage.setItem('poster_type','markdown')
         localStorage.setItem('poster_value','normal')//类型
-        this.$router.push('/poster/markdown')
+        return this.$router.push('/poster/markdown')
       }
       else if(['lm','location','marker','amap','xmap','loc','pick'].indexOf(txt)>=0)//高德地图标注系统
       {
-        this.$router.push('/lm')
+        return this.$router.push('/lm')
       }
       else if(['cd','disk','clouddisk','ddisk','dx','files','fs','folder','fo'].indexOf(txt)>=0)
       {
         // this.$router.push('/folder')
-        this.$router.push({name:"folder",params:{noCache:true}});
+        return this.$router.push({name:"folder",params:{noCache:true}});
       }
       else if(txt.startsWith('start'))
       {
@@ -2487,6 +2487,7 @@ export default {
             this.$toast('启动ib3.hub节点成功！')
           }
         }
+        return 
       }
       else if(txt == 'install')//txt.startsWith('install'))
       {
@@ -2567,6 +2568,7 @@ export default {
         //   this.$toast('未启动任何节点！')
         // }
         this.sayPoplang(';/chat/console/db/save')//以api命令的方式执行之
+        return 
       }
       else if(txt.startsWith('download'))
       {
@@ -2595,6 +2597,7 @@ export default {
         {
           this.$toast('download指令无法下载文件！URL错误：'+cmds[1])
         }
+        return 
       }
       else if(txt.startsWith('ihub'))
       {
@@ -2670,15 +2673,16 @@ export default {
         {
           this.$toast('无法下载文件！URL错误：'+cmds[1])
         }
+        return 
       }
       else if(['change','切换','ch','qh'].indexOf(txt)>=0)
       {
-        this.$router.push('/changeSvrNode')
+        return this.$router.push('/changeSvrNode')
       }
       else if(typeof g_ib3_words!='undefined'&& g_ib3_words.has(txt.trim()))
       {
         let path = g_ib3_words.get(txt.trim())
-        this.$router.push(path)
+        return this.$router.push(path)
       }
       else if(!this.ibapp_chat) //如果都不是，并且不是ibapp_chat，退出sayPoplang
       {

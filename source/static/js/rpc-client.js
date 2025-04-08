@@ -68,15 +68,101 @@ class RTCClient{
         this.options = options ? options:defaultOptions
         this.chunkSize = 150*1024
         this.peerPoolCnt = peerPoolCnt
+        this.peer_failed_cnt = 0;
         let This =this
         this.setWallet(null,function(){
             This.init()
         })
+
+        this.initDatalink()
     }
-    
+    initData()
+    {
+        this.roomId = this.roomid
+        this.peerMap = new Map()
+        this.dataCallBackSession = new Map()
+        this.dataCallBackFunctions= new Map()
+        this.pingTestCnt = 0
+        this.pingTestAllCnt=10
+        this.pingpong_flag = false
+        // this.fastPeer = null
+        this.socket = null
+        this.client =null
+        this.wsMap = new Map()
+    }
+    /**
+     * 对datalink进行包装
+     */
+    async initDatalink()
+    {
+        console.log('initDatalink:roomid:',this.roomid)
+        if(this.roomid.indexOf('loc')<0 && this.roomid.indexOf('dev')<0) return 
+        const socket = new WebSocket("ws://localhost:19800/datalink");
+
+        let This = this
+        return new Promise((resolve)=>{
+            // Connection opened
+            const peer = {}
+            socket.addEventListener("open", (event) => {
+                console.log('initDatalink-opened!')
+                // socket.send("Hello Server!");
+                // socket.send(new TextEncoder().encode('你好外星人'))
+
+                // let rdata = {len:100,max_len:100,callid:101111,url:'/user/info',params:{}}
+                // socket.send(JSON.stringify(rdata))
+                peer.channelName = 'datalink'
+                peer._pc = {sctp:{maxMessageSize:1024*1024*1024*1024}}
+                peer._channel = {bufferedAmount:10}
+                
+                This.initData()
+
+                peer.on = function(event_name,func)
+                {
+                    peer['event-'+event_name] = func
+                }
+
+                peer.emit = function(event_name,data)
+                {
+                    if(typeof peer['event-'+event_name] == 'function')
+                        peer['event-'+event_name](data)
+                }
+
+                // let oldSend = socket.send
+                peer.send = function(msg)
+                {
+                    console.info('datalink-websocket-send-msg:',typeof msg);
+                    socket.send(msg)
+                }
+
+                This.onPeer(peer)
+                This.fastPeer = peer
+                setTimeout(()=>peer.emit('connect','ok'),300)//确保调用peerRefreshCallback
+                resolve(true)
+            });
+
+            // Listen for messages
+            socket.addEventListener("message", (event) => {
+                console.log("initDatalink-Message from server ", event.data,typeof event.data);
+                if(typeof event.data =='object' || event.data instanceof Blob)
+                {
+                    let reader = new FileReader();
+                    reader.onload = function(e) 
+                    {
+                        let result =new Uint8Array(e.target.result)// e.target.result//new Uint8Array(e.target.result)
+                        console.log('obj2bin:',result)
+                        peer.emit('data',result)
+                    }
+                    reader.readAsArrayBuffer(event.data);
+                }
+                else peer.emit('data',event.data)
+            });
+
+            setTimeout(()=>resolve(false),8000)
+        })
+    }
     async init()
     {
-        while(typeof g_dtnsManager == 'undefined' || !g_dtnsManager.web3apps)
+        while(typeof g_dtnsManager == 'undefined' || !g_dtnsManager.web3apps && this.roomid.indexOf('loc')<0)
             await this.sleep(100)
         let web3appInfo = await g_dtnsManager.nslookup('dtns://web3:'+g_dtnsManager.getOriginRoomID(this.roomid.startsWith('devtools')?'forklist':this.roomid))
         if(window.g_dtns_network_static_hosts && window.g_dtns_network_static_hosts[this.roomid])
@@ -91,23 +177,13 @@ class RTCClient{
             ? web3appInfo.network_info.tns_urls[parseInt(Math.random()*159999)
             %web3appInfo.network_info.tns_urls.length]:this.tns_server_url
 
-        this.roomId = this.roomid
-        this.peerMap = new Map()
-        this.dataCallBackSession = new Map()
-        this.dataCallBackFunctions= new Map()
-        this.pingTestCnt = 0
-        this.pingTestAllCnt=10
-        this.pingpong_flag = false
-        this.fastPeer = null
-        this.socket = null
-        this.client =null
-        this.wsMap = new Map()
+        this.initData()
         await this.join()
     }
     async setWallet(walletInfo = null,next = null)
     {
         while(!iWalletDb.db) await this.sleep(100)
-        while(!g_dtnsManager.web3apps) await this.sleep(100)
+        while(!g_dtnsManager.web3apps && this.roomid.indexOf('loc')<0) await this.sleep(100)
         if(!walletInfo)
         {
             let mywallet = null// g_mywallet
@@ -134,6 +210,18 @@ class RTCClient{
     async check_and_reconnect()
     { 
         console.log('into check_and_reconnect',this.is_checking_flag,this.peer())
+        console.log('this.peer_failed_cnt:',this.peer_failed_cnt)
+        this.peer_failed_cnt ++  //兼容datalink
+        if(this.peer_failed_cnt >= 5)
+        {
+            let flag = await this.initDatalink()
+            if(flag)
+            {
+                this.is_checking_flag = false
+                this.peer_failed_cnt = 0;
+                return 
+            }
+        }
         if(this.is_checking_flag) return 
         if(this.peer()) return //依然判断是否是peer已连接成功，如未连接成功，
         //而this.socket.connected = true，则依然有机构在5-10秒内进行再次this.init重试peer连接
@@ -201,7 +289,7 @@ class RTCClient{
         //仅非devtools的roomid方可
         // if( this.roomId.indexOf('devtools')<0 )
         {
-            if((!turnPWD || !turnPWD.ret ) && this.roomId.indexOf('devtools')<0)
+            if((!turnPWD || !turnPWD.ret ) && this.roomId.indexOf('devtools')<0 && this.roomId.indexOf('loc')<0)
             {
                 console.log('client-device-id not bind dtns-network')
                 return false;
@@ -614,14 +702,15 @@ class RTCClient{
         let peerNow = this.fastPeer
         if(!peerNow) this.client.peers().forEach(peer => {peerNow=peer})
 
-        let iCnt = 0,begin = 0,len = this.chunkSize, dataList = [],recved_slice_size = 0//,fileInfo = null150*1024*1
+        let chunkSize = this.chunkSize// this.fastPeer ? 1024*1024*1024*1024 :this.chunkSize //this.chunkSize//
+        let iCnt = 0,begin = 0,len = chunkSize, dataList = [],recved_slice_size = 0//,fileInfo = null150*1024*1
         params.len = len
         //断点续传 2023-10-13新增
         if(downloadManagerInfo) 
         {
             downloadManagerInfo.down_flag = true //继续上传
             // begin = downloadManagerInfo.down_begin
-            len = this.chunkSize //重置为this.chunkSize
+            len = chunkSize //重置为this.chunkSize
             dataList = downloadManagerInfo.down_data_list ? downloadManagerInfo.down_data_list:[]
             downloadManagerInfo.down_data_list = dataList
             let oldSize = downloadManagerInfo.down_recved_slice_size
@@ -644,7 +733,7 @@ class RTCClient{
             if(downloadManagerInfo){ //down_flag = true--不间断继续下载，down_flag下载完当前片段后暂停
                 downloadManagerInfo.down_begin = begin //当前下载的位置（可根据此来统计下载百分比）
                 downloadManagerInfo.down_len = len  //当前下载的区块大小
-                downloadManagerInfo.down_chunk_size = this.chunkSize
+                downloadManagerInfo.down_chunk_size = chunkSize//this.chunkSize
                 // downloadManagerInfo.down_data_list = dataList
                 downloadManagerInfo.down_recved_slice_size = recved_slice_size
                 downloadManagerInfo.down_file_info =fileInfo //2023-10-13新增
@@ -737,10 +826,10 @@ class RTCClient{
             console.log('data.muti_recved_cnt:'+data.muti_recved_cnt)
             if(!data.muti_recved_cnt || data.muti_recved_cnt <=0)  //滑动窗口控制（当data.muti_recved_cnt<=0时，则+=this.chunkSize，如果>=3则减少一个单位chunkSize
             {
-                len+=this.chunkSize
+                len+= chunkSize//this.chunkSize
             }else if(data.muti_recved_cnt>=3){
-                len-=this.chunkSize
-                len = len<=this.chunkSize ? this.chunkSize : len
+                len-= chunkSize//this.chunkSize
+                len = len<= chunkSize ? chunkSize : len
             }
         }
 
@@ -1047,7 +1136,7 @@ class RTCClient{
             return 
         }
 
-        let offset =0 , file = rdata, chunkSize =  this.chunkSize//150*1024
+        let offset =0 , file = rdata, chunkSize = this.chunkSize// peer== this.fastPeer ? 1024*1024*1024 *1024:  this.chunkSize//150*1024  //
         let max_pos =Math.floor( (fileInfo.size+ chunkSize-1)/chunkSize),pos = 0
         let backData = {callid:new Date().getTime()+'.'+parseInt(Math.random()*1000000000),url,
                             max_len:fileInfo.size,len:0,pos,max_pos,fileInfo}
@@ -1091,7 +1180,7 @@ class RTCClient{
             
             await This.sendSliceFileBinary(peer,backData,result,pos)//, send(result)
             let iFailedCnt = 0, begin_count_time = new Date().getTime()
-            let flag = await new Promise((resolve)=>{//= pos%perLen ==0 ? 
+            let flag = max_pos == pos+1 ? true: await new Promise((resolve)=>{//= pos%perLen ==0 ? 
                 let xid = setTimeout(()=>resolve(false),5000)
                 this.dataCallBackFunctions.set(backData.callid+':check',function(cdata){
                     console.log('recved-check-pos:'+cdata.pos+' reved-len:'+cdata.recved_len+' now-pos:'+pos)
@@ -1170,7 +1259,11 @@ class RTCClient{
         readSlice(0)
     }
     peer(){
-        if(!this.client || this.client.peers().length==0) return null;
+        if(!this.client || this.client.peers().length==0)
+        {
+            if(this.fastPeer) return this.fastPeer //兼容datalink
+            return null;
+        } 
         let list = this.client.peers()
         return list[parseInt(Math.random()*100000)%list.length]
     }
@@ -1417,19 +1510,26 @@ class RTCClient{
                     }
                     return 
                 }
-                that.log('recv data.len:'+data.length)
+                console.log('recv data.len:'+data.length,data,typeof data)
                 /*
                 if(data.indexOf('recv')<0 && peer.writable)
                 peer.send('recved---'+data)*/
                 let strBegin = '=file'
+                let dataStr =data
+                if(typeof data == 'object')
+                {
+                    dataStr = ''
+                    for(let i=0;i<data.byteLength&& i<120;i++) dataStr+=String.fromCharCode(data[i])
+                }
                 // console.log('begin-str-is:'+new String(data.slice(0,strBegin.length)))
-                if(data.slice(0,8).indexOf(strBegin)==0){//slice(0,strBegin.length).toString()
+                if((dataStr).indexOf(strBegin)==0){//slice(0,strBegin.length).toString()
                     // console.log('len:'+data.length)
                     // console.log('typeof:'+typeof data)
                     //console.log('charAt[0]:',data)
                     if(data.length<100) //统计接收速度
                     {
-                        let cntParams = that.parseJSON(data.slice(strBegin.length,data.length))
+                        let str = new TextDecoder().decode( data.slice(strBegin.length,data.length))
+                        let cntParams = that.parseJSON(str)// data.substring(strBegin.length,data.length))//data.slice(strBegin.length,data.length))
                         console.log('recved-cnt-from-server:'+JSON.stringify(cntParams))
                         cntParams.begin_str = cntParams.read_slice ? '=slice' :'=count'
                         // if(cntParams.begin_str=='=slice') return console.log('[Error]not need server-side send =slice pkg')
@@ -1437,9 +1537,9 @@ class RTCClient{
                     }
                     let paramsSize =data[strBegin.length]// parseInt()
                     let pkgSize = data[strBegin.length+1]//parseInt(data[])
-                    let paramLength = parseInt(''+(data.slice(strBegin.length+2,strBegin.length+2+paramsSize)))
-                    let pkgLength = parseInt(''+(data.slice(strBegin.length+2+paramsSize,strBegin.length+2+paramsSize+pkgSize)))
-                    let paramStr = data.slice(strBegin.length+2+paramsSize+pkgSize,strBegin.length+2+paramsSize+pkgSize+paramLength)
+                    let paramLength = parseInt(new TextDecoder().decode(data.slice(strBegin.length+2,strBegin.length+2+paramsSize)))
+                    let pkgLength = parseInt(new TextDecoder().decode(data.slice(strBegin.length+2+paramsSize,strBegin.length+2+paramsSize+pkgSize)))
+                    let paramStr = new TextDecoder().decode(data.slice(strBegin.length+2+paramsSize+pkgSize,strBegin.length+2+paramsSize+pkgSize+paramLength))
                     let buff = data.slice(strBegin.length+2+paramsSize+pkgSize+paramLength,strBegin.length+2+paramsSize+pkgSize+paramLength+pkgLength)
                     let params = JSON.parse(paramStr)
                     if(strBegin.length+2+paramsSize+pkgSize+paramLength+pkgLength!= data.length)
@@ -1461,7 +1561,7 @@ class RTCClient{
                     if(receivedData){
                         that.dataCallBack(peer,receivedData)
                     }
-                }else if(data.slice(0,2).indexOf('{')==0)
+                }else if((dataStr).indexOf('{')==0)
                 {
                     console.log('111charAt[0]:',data)
                     //console.log('receivedData:'+data)
@@ -1485,6 +1585,9 @@ class RTCClient{
                             }
                         }
                     }
+                }
+                else{
+                    console.log('undeal-recv-data:',data)
                 }
             })
         }

@@ -73,7 +73,7 @@ class DTNSManager
 
         let iCnt = 30 //2023-10-9  避免死循环等待事件的发生
         //while(!this.web3apps && rpc_client && (iCnt--)>=0) await rpc_client.sleep(100)
-        while(!this.web3apps && (iCnt--)>=0) await new Promise((resolve)=>setTimeout(resolve,100))
+        if(web3name.indexOf('loc')<0) while(!this.web3apps && (iCnt--)>=0) await new Promise((resolve)=>setTimeout(resolve,100))
         let web3appInfo = await this.nslookup(dtnsUrl) //先查询，是否存在于cached中
         if(window.g_dtns_network_static_hosts && window.g_dtns_network_static_hosts[web3name])
         {
@@ -86,6 +86,7 @@ class DTNSManager
         else if(web3name && web3name.indexOf('loc')>=0)
         {
             web3appInfo = {web3name,network_info:window.g_dtns_network_static_hosts['loc.dtns']}
+            if(!this.web3apps) this.web3apps = []
         }
 
         console.log('connect-web3appInfo:',web3appInfo)
@@ -246,35 +247,40 @@ class DTNSManager
     }
     nslookupIB3ID(dtnsUrl)
     {
-        let ibappPrefixStr = 'dtns://ibapp:' 
-        dtnsUrl = dtnsUrl.replace('dtns://web3:',ibappPrefixStr)
-        let dtnsUrlHttp = dtnsUrl.replace(ibappPrefixStr,'http://')
-        let url = new URL(dtnsUrlHttp)//利用上这个解析库进行查询。
-        //console.log('url:'+JSON.stringify(url));
-        let path = url.pathname
-        let params = {}//token_x:context[token_x],token_y:context[token_y],opcode,opval:JSON.stringify(context[opval]),token_key,extra_data:context[extra_data]}
-        for (const [key, value] of url.searchParams) {
-            params[key] =value
-        }
-        console.log('nslookup-path:',path,params,url)
-        dtnsUrl = ibappPrefixStr +url.hostname+path //去掉了参数后的结果
-        
-        let domainName = null
-        let result = {params,dtns_url:dtnsUrl,path,protocol:'dtns',domainName,web3name:url.hostname}
+        try{
+            let ibappPrefixStr = 'dtns://ibapp:' 
+            dtnsUrl = dtnsUrl.replace('dtns://web3:',ibappPrefixStr)
+            let dtnsUrlHttp = dtnsUrl.replace(ibappPrefixStr,'http://')
+            let url = new URL(dtnsUrlHttp)//利用上这个解析库进行查询。
+            //console.log('url:'+JSON.stringify(url));
+            let path = url.pathname
+            let params = {}//token_x:context[token_x],token_y:context[token_y],opcode,opval:JSON.stringify(context[opval]),token_key,extra_data:context[extra_data]}
+            for (const [key, value] of url.searchParams) {
+                params[key] =value
+            }
+            console.log('nslookup-path:',path,params,url)
+            dtnsUrl = ibappPrefixStr +url.hostname+path //去掉了参数后的结果
+            
+            let domainName = null
+            let result = {params,dtns_url:dtnsUrl,path,protocol:'dtns',domainName,web3name:url.hostname}
 
-        if(dtnsUrl.indexOf(ibappPrefixStr)!=0){
-            // let nsRet = await this.nslookup('dtns',dtnsUrl)
-            let tmpUrl = dtnsUrl.replace('dtns://','')
-            let begin = tmpUrl.indexOf('/')
-            begin = begin >= 0 ? begin: tmpUrl.length
-            domainName = tmpUrl.substring(0,begin)
-            if(!domainName || domainName.length<=0) domainName = null;
-            result.web3name = domainName.indexOf('.')>=0 ? domainName.substring(0,domainName.indexOf('.')) :domainName
-            result.domainName = domainName
-        }
+            if(dtnsUrl.indexOf(ibappPrefixStr)!=0){
+                // let nsRet = await this.nslookup('dtns',dtnsUrl)
+                let tmpUrl = dtnsUrl.replace('dtns://','')
+                let begin = tmpUrl.indexOf('/')
+                begin = begin >= 0 ? begin: tmpUrl.length
+                domainName = tmpUrl.substring(0,begin)
+                if(!domainName || domainName.length<=0) domainName = null;
+                result.web3name = domainName.indexOf('.')>=0 ? domainName.substring(0,domainName.indexOf('.')) :domainName
+                result.domainName = domainName
+            }
 
-        console.log('nslookupIB3ID:result:',result)
-        return result
+            console.log('nslookupIB3ID:result:',result)
+            return result
+        }catch(ex)
+        {
+            console.error('nslookupIB3ID-ex:',ex,dtnsUrl)
+        }
     }
     /**
      * 解析dtnsUrl---例如domain、nft、证书编码、会员证书等（待完善/nslooup接口）
@@ -402,7 +408,13 @@ class DTNSManager
             return null
         }
         let static_url = window.g_dtns_ibapps_static_url ? window.g_dtns_ibapps_static_url: 'https://static.dtns.top/ibapps.json'
-        let result = await g_axios.get(static_url,{params:{a:Math.random()},headers:{'Content-Type': 'application/x-www-form-urlencoded'}})
+        let result =  null
+        try{
+            result = await g_axios.get(static_url,{params:{a:Math.random()},headers:{'Content-Type': 'application/x-www-form-urlencoded'}})
+        }catch(ex)
+        {
+            console.error('queryDTNSAllStatic-ex:g_axios.get:'+ex,ex)
+        }
         console.log('queryDTNSAllStatic:result:',result)
         // process.exit(1)
         if(result && result.data){
