@@ -220,3 +220,12 @@ window.g_dtns_network_static_hosts = {
         "network": "loc.dtns"
     },
 } 
+
+window.g_datalink_setting = {
+    default_datalink:'ws://localhost:19800/datalink',
+    datalink:
+    {
+        // "locib":"ws://localhost:19800/datalink",
+        "svrdev":"ws://192.168.1.8:19800/datalink",
+    }
+}

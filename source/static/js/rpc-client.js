@@ -74,6 +74,8 @@ class RTCClient{
             This.init()
         })
 
+        //direct-call datalink（rpc双模）
+        this.datalinkPeer = null
         this.initDatalink()
     }
     initData()
@@ -95,12 +97,18 @@ class RTCClient{
      */
     async initDatalink()
     {
-        console.log('initDatalink:roomid:',this.roomid)
-        if(this.roomid.indexOf('loc')<0 && this.roomid.indexOf('dev')<0) return 
-        const socket = new WebSocket("ws://localhost:19800/datalink");
+        console.log('initDatalink:roomid:',this.roomid,window.g_datalink_setting)
+        //如果是loc模式则直接使用datalink，否则需在配置中存在相应配置方可使用
+        if(this.roomid.indexOf('loc')<0  //&& this.roomid.indexOf('dev')<0 
+            && !(window.g_datalink_setting && g_datalink_setting.datalink[this.roomid])) 
+            return false
+        //拿到websocket的配置的url链接（支持wss）
+        let datalink_url = typeof g_datalink_setting!='undefined' ? 
+            (g_datalink_setting.datalink[this.roomid] ? g_datalink_setting.datalink[this.roomid] : g_datalink_setting.default_datalink) :  "ws://localhost:19800/datalink"
+        const socket = new WebSocket(datalink_url);
 
         let This = this
-        return new Promise((resolve)=>{
+        return await new Promise((resolve)=>{
             // Connection opened
             const peer = {}
             socket.addEventListener("open", (event) => {
@@ -135,7 +143,8 @@ class RTCClient{
                 }
 
                 This.onPeer(peer)
-                This.fastPeer = peer
+                This.datalinkPeer = peer
+                This.pingpong_flag= true //数据链连接上，也代表了rpc-client实例可用（可访问网络了）
                 setTimeout(()=>peer.emit('connect','ok'),300)//确保调用peerRefreshCallback
                 resolve(true)
             });
@@ -212,7 +221,7 @@ class RTCClient{
         console.log('into check_and_reconnect',this.is_checking_flag,this.peer())
         console.log('this.peer_failed_cnt:',this.peer_failed_cnt)
         this.peer_failed_cnt ++  //兼容datalink
-        if(this.peer_failed_cnt >= 5)
+        if(this.peer_failed_cnt >= 5 && !this.datalinkPeer)
         {
             let flag = await this.initDatalink()
             if(flag)
@@ -221,9 +230,13 @@ class RTCClient{
                 this.peer_failed_cnt = 0;
                 return 
             }
+            else{
+                this.sleep(this.peer_failed_cnt*300)
+            }
         }
         if(this.is_checking_flag) return 
-        if(this.peer()) return //依然判断是否是peer已连接成功，如未连接成功，
+        if(this.client && this.client.peers()) return 
+        // if(this.peer()) return //依然判断是否是peer已连接成功，如未连接成功，
         //而this.socket.connected = true，则依然有机构在5-10秒内进行再次this.init重试peer连接
 
         this.is_checking_flag = true
@@ -437,12 +450,15 @@ class RTCClient{
             }
         }
         try{
+            //标记成功
+            this.pingpong_flag =true
             let that = this
             let usedTime = new Date().getTime()- data.callid
             console.log('usedTime:'+usedTime+' channelName:'+peer.channelName)
             if(that.pingTestCnt > that.pingTestAllCnt) return 
 
             let timeObj = that.peerMap.get(peer.channelName)
+            if(!timeObj) return 
             console.log('timeObj:'+timeObj,peer,timeObj)//onPeer this.peerMap.set(peer.channelName,peer)
             if(!timeObj.usedTime || timeObj.usedTime>usedTime ) timeObj.usedTime = usedTime//(usedTime +(timeObj.usedTime?timeObj.usedTime:0))/2 //更新用时
             
@@ -699,8 +715,8 @@ class RTCClient{
             }
         }
         let This = this;
-        let peerNow = this.fastPeer
-        if(!peerNow) this.client.peers().forEach(peer => {peerNow=peer})
+        let peerNow = this.peer()// this.fastPeer
+        //if(!peerNow) this.client.peers().forEach(peer => {peerNow=peer})
 
         let chunkSize = this.chunkSize// this.fastPeer ? 1024*1024*1024*1024 :this.chunkSize //this.chunkSize//
         let iCnt = 0,begin = 0,len = chunkSize, dataList = [],recved_slice_size = 0//,fileInfo = null150*1024*1
@@ -840,8 +856,8 @@ class RTCClient{
         
     }
     sendFile(fileInfo,callback){
-        let peerNow = this.fastPeer
-        if(!peerNow) this.client.peers().forEach(peer => {peerNow=peer})
+        let peerNow = this.peer() //this.fastPeer
+        // if(!peerNow) this.client.peers().forEach(peer => {peerNow=peer})
 
         let params =Object.assign({}, fileInfo)
         delete params.data
@@ -855,8 +871,8 @@ class RTCClient{
             this.sendDataBinary(peerNow,'/file/upload',rdata,fileInfo,callback)//sendDataBinaryD
     }
     async sendImage(fileInfo,callback){
-        let peerNow = this.fastPeer
-        if(!peerNow) this.client.peers().forEach(peer => {peerNow=peer})
+        let peerNow = this.peer() //this.fastPeer
+        // if(!peerNow) this.client.peers().forEach(peer => {peerNow=peer})
 
         console.log('before-fileInfo.data',fileInfo.data)
         let This = this
@@ -1259,9 +1275,16 @@ class RTCClient{
         readSlice(0)
     }
     peer(){
-        if(!this.client || this.client.peers().length==0)
+        let tmpPeer = null
+        if(this.client && this.client.peers().length>0)
         {
-            if(this.fastPeer) return this.fastPeer //兼容datalink
+            console.log('peer-readyState:',this.client.peers()[0],'pingpong_flag:'+this.pingpong_flag)
+            tmpPeer = this.client.peers()[0]
+        }
+        if(!this.client || this.client.peers().length==0 || !tmpPeer || !tmpPeer._channel || tmpPeer._channel.readyState!='open' )//|| this.client.peers()[0].readyState!='open')
+        {
+            //if(this.fastPeer) return this.fastPeer //兼容datalink
+            if(this.datalinkPeer) return this.datalinkPeer
             return null;
         } 
         let list = this.client.peers()
@@ -1311,6 +1334,11 @@ class RTCClient{
                 callback(null)// {data:null,peer:null,peerIsClosed:true} )
             }
             return null
+        }
+        //### 如果是datalink-peer，也尝试继续进行e2ee连接尝试
+        if(true && peer == this.datalinkPeer)
+        {
+            this.check_and_reconnect()
         }
         //let rdataStr = JSON.stringify(rdata)
         let jsonStr =fileInfo?rdata: JSON.stringify(rdata);//JSON.stringify(rdata).length
@@ -1412,8 +1440,8 @@ class RTCClient{
                 if(typeof This.peerRefreshCallback =='function'){
                     This.peerRefreshCallback()
                 }
-                This.callPingPong()
             }
+            if(!this.pingpong_flag) This.callPingPong(5)
         })
         peer.on('close', () => {
             console.log('rtc-peer-close now!')
