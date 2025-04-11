@@ -3709,25 +3709,11 @@ export default {
           if(session_file_id)
           {
             let params = {filename:session_file_id}
-            let file_url = 'dtns://web3:'+rpc_client.roomid+'/file?filename='+params.filename
-            let cachedFileItem = await ifileDb.getDataByKey(file_url)
-            // let cachedFileItem = await ifileDb.getDataByKey(params.filename)//await ifileDb.getDataByKey(params.filename)
-            console.log('download fast by ifileDb:',cachedFileItem)
-            if(!cachedFileItem ){
-              return this.$toast('打开智体聊会话文件失败，原因：文件不存在')
-            } 
-            // this.src = '\n## Build Setup\nxxxxxxxxxxxxxxxxxx\n'+ cachedFileItem.data.filedata
-            let utf8decoder = new TextDecoder()
-            let text = utf8decoder.decode(cachedFileItem.data.filedata)
-            let sessionInfo = null
-            try{
-              sessionInfo = JSON.parse(text)
-            }catch(ex){
-              return this.$toast('智体聊会话文件内容非JSON')
-            }
-            if(!sessionInfo.session_id || !sessionInfo.history || sessionInfo.history.length<=0 || !sessionInfo.history[0].role) return this.$toast('错误：智体聊会话文件无会话纪录！')
+            
             //2025-3-26，参数会用 file_id加速recover-history（不传递history——避免image_url是base64图片，上传参数过大导致超时30s）
-            let ret = await g_dtnsManager.run('dtns://web3:'+rpc_client.roomid+'/rtibchat/session/recover',{file_id:params.filename})//{history:JSON.stringify(sessionInfo.history)})
+            let ret = session_file_id.indexOf('folder') >0 ? 
+               await g_dtnsManager.run('dtns://web3:'+rpc_client.roomid+'/rtkown/chat',{folder_id:params.filename}) : 
+               await g_dtnsManager.run('dtns://web3:'+rpc_client.roomid+'/rtibchat/session/recover',{file_id:params.filename})//{history:JSON.stringify(sessionInfo.history)})
             if(!ret || !ret.ret) return this.$toast('恢复会话失败！原因：'+(ret ? ret.msg:'未知网络原因'))
             //如有旧会话先关闭
             if(this.session_id)
@@ -3738,7 +3724,32 @@ export default {
               this.chatRecord = [] //2025-2-26新增
             }  
             this.session_id = ret.session_id
-            let history = sessionInfo.history 
+
+            let history = null
+            if(session_file_id.indexOf('folder') <0)
+            {
+              let file_url = 'dtns://web3:'+rpc_client.roomid+'/file?filename='+params.filename
+              let cachedFileItem = await ifileDb.getDataByKey(file_url)
+              // let cachedFileItem = await ifileDb.getDataByKey(params.filename)//await ifileDb.getDataByKey(params.filename)
+              console.log('download fast by ifileDb:',cachedFileItem)
+              if(!cachedFileItem ){
+                return this.$toast('打开智体聊会话文件失败，原因：文件不存在')
+              } 
+              // this.src = '\n## Build Setup\nxxxxxxxxxxxxxxxxxx\n'+ cachedFileItem.data.filedata
+              let utf8decoder = new TextDecoder()
+              let text = utf8decoder.decode(cachedFileItem.data.filedata)
+              let sessionInfo = null
+              try{
+                sessionInfo = JSON.parse(text)
+              }catch(ex){
+                return this.$toast('智体聊会话文件内容非JSON')
+              }
+              if(!sessionInfo.session_id || !sessionInfo.history || sessionInfo.history.length<=0 || !sessionInfo.history[0].role) return this.$toast('错误：智体聊会话文件无会话纪录！')
+              history = sessionInfo.history 
+            }
+            else{
+              history = ret.history
+            }
             let ibres = {"ret":true,"msg":"success","txid":"txid_9WSWbtWMmKpRfAtq",
                 "token":"msg_chat02GFpM86ouge",
                 "create_time_i":1684897079,

@@ -11,6 +11,7 @@
           <span @click="shareFolder">分享</span>
           <span @click="addFolder">新建</span>
           <span  @click="addFile">添加</span>
+          <span @click="aiDocs">🤖</span>
         </label>
       </template>
     </div>
@@ -119,6 +120,12 @@ import toolbarJson from '../datajson/toolbar.json'
         localStorage.setItem('poster_type','folder_add_files')
         localStorage.setItem('poster_value',this.now_folder && this.now_folder.folder_id ? this.now_folder.folder_id:  this.folderInfo.folder_id)
         this.$router.push('/poster/folder_add_files')
+      },
+      aiDocs()
+      {
+        localStorage.setItem('ibchat-session-file-id',this.now_folder && this.now_folder.folder_id ? this.now_folder.folder_id:  this.folderInfo.folder_id)
+        this.$toast('进入智体聊会话【ai-docs】...')
+        this.$router.push('/index/chat/ib')
       },
       addFolder(){
         localStorage.setItem('poster_type','folder_new')

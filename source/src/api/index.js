@@ -380,7 +380,7 @@ function process_notify_callback(data)
         if(typeof g_rtmarket_notify_callback == 'function')
             g_rtmarket_notify_callback(data)
     }
-    else if(data.channel.startsWith('rtstandard-channel'))
+    else if(data.channel && data.channel.startsWith('rtstandard-channel'))
     {
         //通过event-bus通知---可on更多的lisenter
         g_pop_event_bus.emit('rtstandard-channel',data)

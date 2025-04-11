@@ -86,7 +86,7 @@ class RTCClient{
         this.dataCallBackFunctions= new Map()
         this.pingTestCnt = 0
         this.pingTestAllCnt=10
-        this.pingpong_flag = false
+        // this.pingpong_flag = false
         // this.fastPeer = null
         this.socket = null
         this.client =null
@@ -138,6 +138,12 @@ class RTCClient{
                 // let oldSend = socket.send
                 peer.send = function(msg)
                 {
+                    if(socket.readyState === WebSocket.CLOSED)
+                    {
+                        This.datalinkPeer = null
+                        console.error('websocket is closed：',socket)
+                        return 
+                    }
                     console.info('datalink-websocket-send-msg:',typeof msg);
                     socket.send(msg)
                 }
@@ -254,7 +260,7 @@ class RTCClient{
                 await this.sleep(5000) //5秒内是否连是对应的client，如果无法连上，重启连接
                 this.is_checking_flag = false// !(this.peer() || false) //如果是peer!=null，is_checking_flag则为false，不再继续循环
             }else{
-                await this.sleep(2000)
+                await this.sleep(2000+ 1000*iCnt) //延迟 2025-4-11
                 this.is_checking_flag = true //继续循环
             }
 
@@ -1328,6 +1334,7 @@ class RTCClient{
             // if(!peer || !peer._pc){
             //     this.init()
             // }
+            this.pingpong_flag = false //2025-4-11新增
             this.check_and_reconnect()
 
             if(typeof callback =='function'){
