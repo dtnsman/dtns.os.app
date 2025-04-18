@@ -286,10 +286,12 @@ import imgUrl from "../../../static/images/connect-mini.jpg"
             let hash = await key_util.hashVal(web3name+':'+timestamp)
             let sign = await key_util.signMsg(hash,rpc_client.mywallet.private_key)
 
-            let res =  await This.$api.network.userLoginBySafeDevice({web3name,sign,timestamp})
-              .then(res => {
+            let res = await g_dtnsManager.run( 'dtns://web3:'+web3name+'/user/device/login',{web3name,sign,timestamp}) //await This.$api.network.userLoginBySafeDevice({web3name,sign,timestamp})
+              //.then(res => 
+              {
                 console.log('ok->userLoginBySafeDevice-res:',res);
-                if (res.ret == true) {
+                if (res && res.ret) 
+                {
                   // alert("登陆成功");
                   // console.log(res.data.user_id)
                   // console.log(res.data.s_id)
@@ -329,7 +331,7 @@ import imgUrl from "../../../static/images/connect-mini.jpg"
                   //DTNS.network数据未同步
                   This.$toast("登录失败！原因："+(res && res.msg ? res.msg:'未知网络原因'),20000);
                 }
-              });
+              }//);
           // })
           // await rpc_client.sleep(10000)
         // }

@@ -919,10 +919,11 @@ class DChatManager{
     }
 
     This.$toast.success('切换节点成功！')
-    let sessionInfo = await iSessionDb.getDataByKey('session:'+dstWeb3name)
-    if(sessionInfo && sessionInfo.data)
+
+
+    //成功得到session后跳转
+    let successFunc = async function(res)
     {
-      let res = sessionInfo.data
       {
         localStorage.setItem('newDWebFlag','1')
         localStorage.setItem("s_id", res.s_id);
@@ -943,7 +944,30 @@ class DChatManager{
         This.$router.push({name:"index",params:{noCache:true}});//清理掉缓存
       }
     }
-    else{
+
+    let dstwallet = (await iWalletDb.getDataByKey('mywallet:'+dstWeb3name));
+    //#1 先判断session
+    let sessionInfo = await iSessionDb.getDataByKey('session:'+dstWeb3name)
+    if(sessionInfo && sessionInfo.data)
+    {
+      let res = sessionInfo.data
+      This.$toast('使用会话纪录登录成功！')
+      return await successFunc(res)
+    }
+    //#2 再判断密钥——使用密钥登录
+    else if(dstwallet && dstwallet.data)
+    {
+      //尝试以密钥登录
+      let sessionRet = await this.loginIB3Device(dstWeb3name)
+      console.log('switchIb3-use-private-key-login:',sessionRet)
+      if(sessionRet && sessionRet.ret)
+      {
+        This.$toast('使用密钥登录成功！')
+        return await successFunc(sessionRet)
+      }
+    }
+    // else  //#3 只能切换节点了
+    {
       await this.switchAppNow(dstWeb3name,This,gotoConnectFlag,invite_code)
     }
   }
@@ -1581,6 +1605,8 @@ class DChatManager{
       return false;
     }
     let walletKeys = []
+    let keys =await this.getWalletIB3List(true)
+    // let keysStr = JSON.stringify(keys)
     for(let i=0;i<walletJSON.length;i++)
     {
       let keyData = walletJSON[i]
@@ -1592,6 +1618,13 @@ class DChatManager{
 
       walletKeys.push(keyData)
       //保存至其中（生成时间序列）
+      let keyDataOld = await iWalletDb.getDataByKey(keyData.key)
+      if(keyDataOld && keyDataOld.data && keyDataOld.data.private_key != keyData.data.private_key)// && keyData.key && keyData.key.split(':').length==2 && keysStr.split(keyDataOld.data).length==2) //不会出现多次的情况下才会保存为时间戳）
+      {
+        // console.log('keysStr.split(keyDataOld.data).length:',keysStr.split(keyDataOld.data).length)
+        //转为时间戳保存  2025-4-17修正
+        iWalletDb.addData({key:keyDataOld.key+':'+Date.now(),data:keyDataOld.data}) 
+      }
       iWalletDb.deleteDataByKey(keyData.key)
       iWalletDb.addData({key:keyData.key,data:keyData.data}) 
       // iWalletDb.addData({key:keyData.key+':'+Date.now(),data:keyData.data})//这里会导致多次添加时间戳

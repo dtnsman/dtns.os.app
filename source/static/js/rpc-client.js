@@ -76,6 +76,7 @@ class RTCClient{
 
         //direct-call datalink（rpc双模）
         this.datalinkPeer = null
+        this.initData()
         this.initDatalink()
     }
     initData()
@@ -83,15 +84,15 @@ class RTCClient{
         this.roomId = this.roomid
         this.peerMap = new Map()
         this.dataCallBackSession = new Map()
-        this.dataCallBackFunctions= new Map()
+        this.dataCallBackFunctions= this.dataCallBackFunctions ? this.dataCallBackFunctions : new Map()  //这个不重置（会出现严重的bug——即webrtc与websocket之/user/device/login的BUG）2025-4-18
         this.pingTestCnt = 0
         this.pingTestAllCnt=10
         // this.pingpong_flag = false
         // this.fastPeer = null
         this.socket = null
         this.client =null
-        this.wsMap = new Map()
-    }
+        this.wsMap = this.wsMap ? this.wsMap : new Map()
+    } 
     /**
      * 对datalink进行包装
      */

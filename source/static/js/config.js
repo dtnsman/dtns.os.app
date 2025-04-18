@@ -222,7 +222,7 @@ window.g_dtns_network_static_hosts = {
 } 
 
 window.g_datalink_setting = {
-    default_datalink:'ws://localhost:19800/datalink',
+    default_datalink:'ws://127.0.0.1:19800/datalink',
     datalink:
     {
         // "locib":"ws://localhost:19800/datalink",
