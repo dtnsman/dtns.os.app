@@ -2147,6 +2147,11 @@ export default {
            this.chatRecord = [] //重新置为空。
            this.poplangAgent = null
         }
+        //设置为空
+        if(window.g_ibchatManager)
+        {
+          window.g_ibchatManager = null
+        }
            
         talkMsgInfo.from="ib"
         talkMsgInfo.user_id= talkMsgInfo.from
@@ -2230,6 +2235,7 @@ export default {
         //   talkMsgInfo.msg = result? converter.makeHtml(result).replaceAll('<img','<img style="max-width:'+max_width+'px" '):oldResult
         //   this.websocketonmessage(talkMsgInfo,true,true)
         // }
+        if(result)
         await this.sayPoplang(result)
         return true
       }
@@ -2276,6 +2282,22 @@ export default {
           }
         }
         return true
+      }
+      else if(txt=='智体管家' || txt=='管家')
+      {
+        if(!window.g_ibchatManager)
+        {
+          window.g_ibchatManager = new DIBChatManager(this)
+        }
+        return g_ibchatManager.new()
+      }
+      else if(txt=='退出')
+      {
+        if(!window.g_ibchatManager)
+        {
+          window.g_ibchatManager = new DIBChatManager(this)
+        }
+        return g_ibchatManager.back()
       }
       else if(txt=='附件')
       {
@@ -3726,7 +3748,7 @@ export default {
             this.session_id = ret.session_id
 
             let history = null
-            if(session_file_id.indexOf('folder') <0)
+            if(!ret.history && session_file_id.indexOf('folder') <0)
             {
               let file_url = 'dtns://web3:'+rpc_client.roomid+'/file?filename='+params.filename
               let cachedFileItem = await ifileDb.getDataByKey(file_url)
