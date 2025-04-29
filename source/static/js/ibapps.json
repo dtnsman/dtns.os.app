@@ -1,0 +1,246 @@
+{
+    "list": [
+        {
+            "dtns_user_id": "dtns_dtns0003QmERN24WTNSzJV8KUY4AVqej",
+            "web3name": "landblue",
+            "web3desc": "欢迎大家来云撸猫！",
+            "public_key": "iH76Gfp2NmB4wDg52BEmzEmwnzvEbvhSAxr46U7uCNQ4",
+            "web3_id": "dtns_landblue000appi2sKJ724ckiyfARAoF",
+            "name": "landblue蓝喵",
+            "pics": [],
+            "create_time_i": 1718158821,
+            "create_time": "2024-06-12 02:20",
+            "network": "x.dtns",
+            "network_info": {
+                "turn_urls": [
+                    "turn:groupbuying.opencom.cn:3478"
+                ],
+                "tns_urls": [
+                    "https://tns.dtns.top"
+                ],
+                "phones_urls": [
+                    "https://static.dtns.top/phones.json"
+                ],
+                "network": "x.dtns",
+                "forkid": "a"
+            }
+        },
+        {
+            "dtns_user_id": "dtns_dtns0003xZBHjbyKcbSkW22YYAb2RBB9",
+            "web3name": "xd",
+            "web3desc": "xd",
+            "public_key": "23AwiDBEvqTqV9V7rnAszsA5AsjfqndkbkCvGhjvsFcZX",
+            "web3_id": "dtns_xd000app5nYpmBthG1Dp7PYzFVSWY5DQ",
+            "name": "xd",
+            "pics": [],
+            "create_time_i": 1712656269,
+            "create_time": "2024-04-09 09:51",
+            "network": "main.dtns",
+            "network_info": {
+                "turn_urls": [
+                    "turn:groupbuying.opencom.cn:3478"
+                ],
+                "tns_urls": [
+                    "https://groupbuying.opencom.cn:446"
+                ],
+                "phones_urls": [
+                    "https://static.dtns.top/phones.json"
+                ],
+                "network": "main.dtns"
+            }
+        },
+        {
+            "dtns_user_id": "dtns_dtns000YeUsw8n1SnMrR7sxjdsi8fCnC",
+            "web3name": "jobs3d",
+            "web3desc": "乔布斯3D纪念馆",
+            "public_key": "26ZsBQEs39eseZ2BnP7Mjc9PtXf2wdHRMKi8yV8AcpSRv",
+            "web3_id": "dtns_jobs3d000appF8GV79nNkRzS2w4ixpCQ",
+            "name": "jobs3d",
+            "pics": [],
+            "create_time_i": 1712464795,
+            "create_time": "2024-04-07 04:39",
+            "network": "x.dtns",
+            "network_info": {
+                "turn_urls": [
+                    "turn:groupbuying.opencom.cn:3478"
+                ],
+                "tns_urls": [
+                    "https://tns.dtns.top"
+                ],
+                "phones_urls": [
+                    "https://static.dtns.top/phones.json"
+                ],
+                "network": "x.dtns",
+                "forkid": "a"
+            }
+        },
+        {
+            "dtns_user_id": "dtns_dtns000YeUsw8n1SnMrR7sxjdsi8fCnC",
+            "web3name": "qw",
+            "web3desc": "q",
+            "public_key": "sXWhsWjVk9n6X3s4jxooW5RzWFv14EF49EDkRBzkuL6s",
+            "web3_id": "dtns_qw000app546GJ765XfBXidHg1nvQVrxT",
+            "name": "",
+            "logo": [],
+            "pics": [],
+            "create_time_i": 1685958270,
+            "create_time": "2023-06-05 17:44",
+            "network": "x.dtns",
+            "network_info": {
+                "turn_urls": [
+                    "turn:groupbuying.opencom.cn:3478"
+                ],
+                "tns_urls": [
+                    "https://tns.dtns.top"
+                ],
+                "phones_urls": [
+                    "https://static.dtns.top/phones.json"
+                ],
+                "network": "x.dtns",
+                "forkid": "a"
+            }
+        },
+        {
+            "dtns_user_id": "dtns_dtns000YeUsw8n1SnMrR7sxjdsi8fCnC",
+            "web3name": "dtns",
+            "web3desc": "dtns.network",
+            "public_key": "qUVC83w5xkhzZzbtJb6wvHA7aTuj5rGEcVGBVnH8zWM7",
+            "web3_id": "dtns_dtns000appc4ry9HNWtcTaxXjNQCTKYQ",
+            "create_time_i": 1685064626,
+            "create_time": "2023-05-26 09:30",
+            "network": "main.dtns",
+            "network_info": {
+                "turn_urls": [
+                    "turn:groupbuying.opencom.cn:3478"
+                ],
+                "tns_urls": [
+                    "https://groupbuying.opencom.cn:446"
+                ],
+                "phones_urls": [
+                    "https://static.dtns.top/phones.json"
+                ],
+                "network": "main.dtns"
+            }
+        },
+        {
+            "dtns_user_id": "dtns_dtns000YeUsw8n1SnMrR7sxjdsi8fCnC",
+            "web3name": "forklist",
+            "web3desc": "hello",
+            "public_key": "yKcspLK81m1pnPNHXEL8WjKi7TxepL13TZykWddG5coG",
+            "web3_id": "dtns_forklist000app3S56xkFzQPChS82uvh",
+            "create_time_i": 1683336469,
+            "create_time": "2023-05-06 09:27",
+            "network": "main.dtns",
+            "network_info": {
+                "turn_urls": [
+                    "turn:groupbuying.opencom.cn:3478"
+                ],
+                "tns_urls": [
+                    "https://groupbuying.opencom.cn:446"
+                ],
+                "phones_urls": [
+                    "https://static.dtns.top/phones.json"
+                ],
+                "network": "main.dtns"
+            }
+        },
+        {
+            "dtns_user_id": "dtns_dtns000YeUsw8n1SnMrR7sxjdsi8fCnC",
+            "web3name": "nftlist",
+            "web3desc": "hello",
+            "public_key": "jjGpsccyQHAK4GgHmwjLzm2vBE8H33jBKMUuJpBh9JGS",
+            "web3_id": "dtns_nftlist000app4DXDs2Hk921v9FM8btg",
+            "create_time_i": 1680774906,
+            "create_time": "2023-04-06 17:55",
+            "network": "main.dtns",
+            "network_info": {
+                "turn_urls": [
+                    "turn:groupbuying.opencom.cn:3478"
+                ],
+                "tns_urls": [
+                    "https://groupbuying.opencom.cn:446"
+                ],
+                "phones_urls": [
+                    "https://static.dtns.top/phones.json"
+                ],
+                "network": "main.dtns"
+            }
+        },
+        {
+            "dtns_user_id": "dtns_dtns000YeUsw8n1SnMrR7sxjdsi8fCnC",
+            "web3name": "svr",
+            "web3desc": "hello",
+            "public_key": "28gibzVpuesuuLjvdYJ5n2K2sqxBxRZAhwVeatm9pxTS3",
+            "web3_id": "dtns_svr000app2QChoYph6z3yN4e2k5D66md",
+            "create_time_i": 1680055631,
+            "create_time": "2023-03-29 10:07",
+            "network": "main.dtns",
+            "network_info": {
+                "turn_urls": [
+                    "turn:groupbuying.opencom.cn:3478"
+                ],
+                "tns_urls": [
+                    "https://groupbuying.opencom.cn:446"
+                ],
+                "phones_urls": [
+                    "https://static.dtns.top/phones.json"
+                ],
+                "network": "main.dtns"
+            }
+        },
+        {
+            "dtns_user_id": "dtns_dtns000YeUsw8n1SnMrR7sxjdsi8fCnC",
+            "web3name": "ld",
+            "web3desc": "hello",
+            "public_key": "21aCm68V79uij2d3QEddaKhu227UzuCwKVhkyKjKRKswA",
+            "web3_id": "dtns_ld000apptnKZTFREpkArC2EUTYbt9w9Q",
+            "create_time_i": 1679015450,
+            "create_time": "2023-03-17 09:10",
+            "network": "x.dtns",
+            "logo": "obj_imgopen4nWpgYnyy",
+            "forkid": "s",
+            "network_info": {
+                "turn_urls": [
+                    "turn:groupbuying.opencom.cn:3478"
+                ],
+                "tns_urls": [
+                    "https://tns.dtns.top"
+                ],
+                "phones_urls": [
+                    "https://static.dtns.top/phones.json"
+                ],
+                "network": "x.dtns",
+                "forkid": "a"
+            }
+        }
+    ],
+    "networks": {
+        "x.dtns": {
+            "turn_urls": [
+                "turn:groupbuying.opencom.cn:3478"
+            ],
+            "tns_urls": [
+                "https://tns.dtns.top"
+            ],
+            "phones_urls": [
+                "https://static.dtns.top/phones.json"
+            ],
+            "network": "x.dtns",
+            "forkid": "a"
+        },
+        "main.dtns": {
+            "turn_urls": [
+                "turn:groupbuying.opencom.cn:3478"
+            ],
+            "tns_urls": [
+                "https://groupbuying.opencom.cn:446"
+            ],
+            "phones_urls": [
+                "https://static.dtns.top/phones.json"
+            ],
+            "network": "main.dtns"
+        }
+    },
+    "ret": true,
+    "msg": "success"
+}

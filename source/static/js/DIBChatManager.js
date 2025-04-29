@@ -89,9 +89,14 @@ class DIBChatManager
                 this.contextView.chatText = '智体管家'+'('+this.contextView.model+')'
             }
         }
-        setTimeout(()=>this.contextView.poplangAgent = null,1000)
+        let This = this
+        setTimeout(()=>{
+          This.contextView.$toast('你当前对话的是智体管家！')
+          This.contextView.poplangAgent = null
+          This.contextView.poplangAgentAutoRunFlag = window.g_poplang_agent_auto_run_default_flag//false
+          This.contextView.initPoplangAgent(history,false)
+        },1000)
         // this.contextView.poplangAgent = null //2025-3-27
-        this.contextView.$toast('你当前对话的是智体管家！')
         return true
     }
     //退出
@@ -210,9 +215,14 @@ class DIBChatManager
                 this.contextView.chatText = '智体应用'+'('+this.contextView.model+')'
             }
           }
-          setTimeout(()=>this.contextView.poplangAgent = null,1000)
+          let This = this
+          setTimeout(()=>{
+            This.contextView.$toast('成功打开智体应用！')
+            This.contextView.poplangAgent = null
+            This.contextView.poplangAgentAutoRunFlag = window.g_poplang_agent_auto_run_default_flag//false
+            This.contextView.initPoplangAgent(history,false)
+          },1000)
           // this.contextView.poplangAgent = null //2025-3-27
-          this.contextView.$toast('成功打开智体应用！')
           return true
         }
         return false

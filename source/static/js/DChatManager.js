@@ -2287,14 +2287,14 @@ class DChatManager{
   async queryXMSGLabels()
   {
     let qparams = {user_id:localStorage.user_id,s_id:localStorage.s_id,begin:0,len:1000000,label_type:'list'}
-    let labelsRet = await this.viewContext.$api.network.listXMSG(qparams)
+    let labelsRet = await g_dtnsManager.run('dtns://web3:'+rpc_client.roomid+'/dweb/xmsg/list',qparams)//this.viewContext.$api.network.listXMSG(qparams)
     let labels = []
     if(labelsRet && labelsRet.ret && labelsRet.list)
     {
       labels = labels.concat( labelsRet.list )
     }
     qparams.label_type = 'rell' //用户标签
-    labelsRet = await this.viewContext.$api.network.listXMSG(qparams)
+    labelsRet = await g_dtnsManager.run('dtns://web3:'+rpc_client.roomid+'/dweb/xmsg/list',qparams)//this.viewContext.$api.network.listXMSG(qparams)
     if(labelsRet && labelsRet.ret && labelsRet.list)
     {
       labels = labels.concat( labelsRet.list )

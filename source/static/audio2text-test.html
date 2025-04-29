@@ -1,0 +1,20 @@
+<span onclick="start()">启用</span>
+
+<script>
+  function start()
+  {
+      // 初始化识别器
+        let recognition = typeof SpeechRecognition !='undefined' ?  new SpeechRecognition() :new  webkitSpeechRecognition()
+        recognition.lang = 'zh-CN'; // 设置语言为中国大陆中文
+        recognition.continuous = true; // 连续识别模式
+        recognition.interimResults = true; // 返回中间结果
+        recognition.maxAlternatives = 1;
+        recognition.start(); // 开始识别
+        recognition.onresult = function(e) {
+        console.log('识别结果：',e.results[0][0].transcript); // 打印识别的文本
+        };
+        recognition.onerror = function(e) {
+        console.log('Error: ' + e.error); // 处理错误
+};
+  }
+</script>

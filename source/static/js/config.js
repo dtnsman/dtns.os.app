@@ -229,3 +229,5 @@ window.g_datalink_setting = {
         "svrdev":"ws://192.168.1.8:19800/datalink",
     }
 }
+
+window.g_poplang_agent_auto_run_default_flag = true

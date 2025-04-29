@@ -31,6 +31,42 @@ async function queryUrls()
 }
 queryUrls()
 
+window.loadDtnsImage = async function(el)
+{
+  if(el  && el.src && el.src.startsWith('dtns://'))
+  {
+    //加载缓存的图片或者远程加载图片
+    let img_id = el.src
+    let params = img_id && img_id.startsWith('dtns://') ? {}:{user_id:localStorage.user_id,s_id:localStorage.s_id,filename:img_id,img_kind:'open'}//,img_p:'min200'}
+    let reqUrl = img_id && img_id.startsWith('dtns://')  ? img_id.replace('&amp;','&') :'dtns://web3:'+rpc_client.roomid+'/image/view'
+    let isBaseUrl = img_id && img_id.startsWith('data:image/')
+
+    let item = await imageDb.getDataByKey(img_id)//localStorage.getItem('chatlogo-'+chatInfo.chatlogo)
+    console.log('loadDtnsImage-load-img:'+img_id)
+    //el.src = init.default
+    if(item && item.data){ el.src = item.data;}
+    else if(isBaseUrl){
+      el.src = img_id
+    }
+    else{
+        // queryImg(reqUrl,params).then(async (data)=>{
+        g_dtnsManager.run(reqUrl,params).then(async (data)=>{
+          if(data && data.data)
+          {
+            el.src ='data:image/png;base64,'+data.data
+            imageDb.addData({img_id,data:el.src })
+          }
+          // if(imageCatcheList.indexOf(src)<0) imageCatcheList.push(src)
+        //setTimeout(()=>This.chatRexord =  This.chatRexord,100)
+        }).catch((ex)=>{
+            console.log('loadDtnsImage:load img error'+ex)
+            // el.src = init.default
+        })
+    //localStorage.setItem('chatlogo-'+chatInfo.chatlogo,chatInfo.img)
+    }
+  }
+}
+
 //用于backDb-订阅dnalink.node节点
 const ifileDb = new IFileIndexDB('ifiledb','ifilecache')
 ifileDb.openDB()

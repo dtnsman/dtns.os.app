@@ -496,7 +496,6 @@ function GetDateTimeFormat(timestr) {
         return t;
     }
 
-
 let const_chatid = null;
 let user_keepalive =0;
 let websock = null;
@@ -660,6 +659,8 @@ export default {
       image_url:null,//智体聊chat-api参数
       image_data:null,
       recordStyle:null,
+      poplangAgent:null,
+      poplangAgentAutoRunFlag:window.g_poplang_agent_auto_run_default_flag,
     };
     
   },
@@ -2045,6 +2046,27 @@ export default {
     copyTxt(item){
       this.txt =item.origin_msg ?  item.origin_msg : item.msg_info.msg
     },
+    async initPoplangAgent(history,showTips = true,needAgentDefined = false)
+    {
+      if(!history || history.length<=0) return false
+      let first_prompt = history[0].content
+      let match_agent_str = first_prompt.indexOf('```poplang.agent')<0 ? '```poplang.ai.agent':'```poplang.agent'
+      if(first_prompt.indexOf(match_agent_str)<0 && showTips)
+      {
+        if(needAgentDefined)
+          return this.$toast('不存在popalng.agent智体代码，请核查！')
+        //如果不需进行poplang.ai.agent-defined，可直接指令【运行】智体IB返回的poplang代码。2025-4-23新增
+        this.poplangAgent = new PopRuntime()
+        return true
+      } 
+      let codeStr = first_prompt.split(match_agent_str)[1]
+      if(!codeStr && showTips || codeStr.indexOf('```')<0 && showTips) return  this.$toast('poplang.agent智体代码存在不完整情况，无法强行运行！')
+      codeStr = codeStr.substring(match_agent_str.length,codeStr.indexOf('```'))
+      this.poplangAgent = new PopRuntime()
+      let initRet = await this.poplangAgent.runScript(null,codeStr)
+      console.log('poplang.ai.agent-initRet:',initRet,codeStr)
+      return initRet
+    },
     async sayPoplang(txt,res = null){
       let originTxt = txt
       let popFlagStr = ';'//'!pop:'
@@ -2079,7 +2101,7 @@ export default {
         {
           talk_content+='![图片]('+this.image_data+')'
         }
-        talkMsgInfo.msg = converter.makeHtml(talk_content).replaceAll('<img','<img style="max-width:'+max_width+'px" ')//originTxt
+        talkMsgInfo.msg = converter.makeHtml(talk_content).replaceAll('<img','<img onerror="loadDtnsImage(this)" style="max-width:'+max_width+'px" ')//originTxt
         talkMsgInfo.origin_msg = originTxt
         talkMsgInfo.from = "user"
         talkMsgInfo.user_id = talkMsgInfo.from
@@ -2146,6 +2168,7 @@ export default {
            this.session_id = null
            this.chatRecord = [] //重新置为空。
            this.poplangAgent = null
+           this.poplangAgentAutoRunFlag = window.g_poplang_agent_auto_run_default_flag//false
         }
         //设置为空
         if(window.g_ibchatManager)
@@ -2208,15 +2231,7 @@ export default {
         if(!ret || !ret.ret ||!ret.history ||ret.history.length<=0) return this.$toast('会话历史为空，无法【运行】智能体工具tools')
         if(!this.poplangAgent)
         {
-          let first_prompt = ret.history[0].content
-          let match_agent_str = first_prompt.indexOf('```poplang.agent')<0 ? '```poplang.ai.agent':'```poplang.agent'
-          if(first_prompt.indexOf(match_agent_str)<0) return this.$toast('不存在popalng.agent智体代码，请核查！')
-          let codeStr = first_prompt.split(match_agent_str)[1]
-          if(codeStr.indexOf('```')<0) return  this.$toast('poplang.agent智体代码存在不完整情况，无法强行运行！')
-          codeStr = codeStr.substring(match_agent_str.length,codeStr.indexOf('```'))
-          this.poplangAgent = new PopRuntime()
-          let initRet = await this.poplangAgent.runScript(null,codeStr)
-          console.log('poplang.ai.agent-initRet:',initRet,codeStr)
+          this.initPoplangAgent(ret.history)
         }
         if(ret.history.length<=1) return this.$toast('不存在待运行的tools工具，请确认')
         let last_prompt = ret.history[ret.history.length-1].content
@@ -2224,9 +2239,14 @@ export default {
         let runRets = await this.poplangAgent.runScript(null,last_prompt.split('```poplang')[1])
         console.log('poplang.run-runRets:',runRets,last_prompt)
         let oldResult = this.poplangAgent.context['call_result']
-        runRets = await this.poplangAgent.op(null,this.poplangAgent.context['agent_callback'])
-        console.log('poplang.run-runCallbackRet:',runRets,this.poplangAgent.context['agent_callback'],oldResult)
-        let result = this.poplangAgent.context['result']
+        let result =  oldResult ? '```json\n'+ JSON.stringify(oldResult) +'\n```' :null
+        //# 如果不存在agent_callback函数，则直接使用call_result值作为result结果。2025-4-23优化逻辑
+        if(this.poplangAgent.context['agent_callback'])
+        {
+          runRets = await this.poplangAgent.op(null,this.poplangAgent.context['agent_callback'])
+          console.log('poplang.run-runCallbackRet:',runRets,this.poplangAgent.context['agent_callback'],oldResult)
+          result = this.poplangAgent.context['result']
+        }
         // {
         //   talkMsgInfo.from="user"
         //   talkMsgInfo.user_id= talkMsgInfo.from
@@ -2769,7 +2789,7 @@ export default {
             if(Date.now()-lastTime>delayTime)
             {
               lastTime = Date.now()
-              talkMsgInfo.msg = converter.makeHtml(msg_content).replaceAll('<img','<img style="max-width:'+max_width+'px" ')//msg_content
+              talkMsgInfo.msg = converter.makeHtml(msg_content).replaceAll('<img','<img onerror="loadDtnsImage(this)" style="max-width:'+max_width+'px" ')//msg_content
               nowThis.websocketonmessage(talkMsgInfo,true,true)
             }
             else{
@@ -2779,12 +2799,36 @@ export default {
                 if(msg_content.length >= talkMsgInfo.origin_msg.length) //当内容无变化时（如有变化，这个会更新最后一个变化）
                 {
                   lastTime = Date.now()
-                  talkMsgInfo.msg = converter.makeHtml(msg_content).replaceAll('<img','<img style="max-width:'+max_width+'px" ')//msg_content
+                  talkMsgInfo.msg = converter.makeHtml(msg_content).replaceAll('<img','<img onerror="loadDtnsImage(this)" style="max-width:'+max_width+'px" ')//msg_content
                   nowThis.websocketonmessage(talkMsgInfo,true,true)
                 }
               },delayTime)
             }
-            if(obj.done) g_pop_event_bus.removeListener('rtibchat',func)
+            if(obj.done){
+              g_pop_event_bus.removeListener('rtibchat',func)
+              if(originTxt && originTxt.indexOf('```poplang.')>=0)
+              {
+                let callNowFunc = async function(){
+                  let ret = await g_dtnsManager.run('dtns://web3:'+rpc_client.roomid+'/rtibchat/session/history',{session_id:nowThis.session_id})
+                  // if(!ret || !ret.ret ||!ret.history ||ret.history.length<=0) return this.$toast('会话历史为空，无法【运行】智能体工具tools')
+                  if(ret && ret.ret && !nowThis.poplangAgent)
+                  {
+                    nowThis.initPoplangAgent(ret.history)
+                  }
+                  console.log('first_prompt:query-history and initPoplangAgent')
+                }
+                callNowFunc()
+              }
+              if(nowThis.poplangAgentAutoRunFlag 
+                && msg_content.indexOf('```poplang')>=0 )
+                // && msg_content.split('```poplang').length==2)//如果不为2，代码切割得到的poplang代码块是多个（反应的是不能自动执行---可能是deepseek提供的案例代码、测试代码、纠错代码等）
+              { 
+                if(msg_content.split('```poplang').length>2) return nowThis.$toast('【auto-run出错了】不能自动运行2个以上的poplang代码块！')
+                console.log('poplangAgentAutoRunFlag==true, and run the poplang.agent.code : ',msg_content)
+                nowThis.$toast('【poplang智体应用自动运行】auto run poplang code！')
+                setTimeout(()=>nowThis.sayPoplang('运行','not show msg'),1000)//1秒后跳转
+              }
+            } 
           }
           g_pop_event_bus.removeAllListeners('rtibchat')
           g_pop_event_bus.on('rtibchat',func)
@@ -3805,12 +3849,12 @@ export default {
               {
                 let tmpContent = ses.content[0].text +'![img]('+ses.content[1].image_url+')'
                 talkMsgInfo.origin_msg = tmpContent
-                talkMsgInfo.msg = converter.makeHtml(tmpContent).replaceAll('<img','<img style="max-width:'+max_width+'px" ')
+                talkMsgInfo.msg = converter.makeHtml(tmpContent).replaceAll('<img','<img onerror="loadDtnsImage(this)" style="max-width:'+max_width+'px" ')
               }
               else
               { 
                 talkMsgInfo.origin_msg = ses.content
-                talkMsgInfo.msg = converter.makeHtml(ses.content).replaceAll('<img','<img style="max-width:'+max_width+'px" ')
+                talkMsgInfo.msg = converter.makeHtml(ses.content).replaceAll('<img','<img onerror="loadDtnsImage(this)" style="max-width:'+max_width+'px" ')
               }
               //else talkMsgInfo.msg = ses.content
               this.websocketonmessage(talkMsgInfo,true,true)
@@ -3822,6 +3866,8 @@ export default {
             }
             this.poplangAgent = null //2025-3-27
             this.$toast('成功恢复历史会话！')
+            this.poplangAgentAutoRunFlag = window.g_poplang_agent_auto_run_default_flag
+            this.initPoplangAgent(history,false)
             return true
           }
 
@@ -4135,6 +4181,13 @@ export default {
       g_pop_event_bus.on('update_dtns_loction',this.translate)
     }
     this.translate()
+
+    let This = this
+    //全局函数，设置poplangAgentAutoRunFlag
+    window.g_setPoplangAgentAutoRunFlag = function ( flag = true )
+    {
+      This.poplangAgentAutoRunFlag = flag
+    }
 
     this.create_time  = Date.now()
     this.imgStatus = window.rpc_client ? rpc_client.pingpong_flag :false

@@ -1,0 +1,51 @@
+<script type="application/javascript" src="./vosk.js"></script>
+<span onclick="init()">启动</span>
+<script>
+    async function init() {
+        console.log('into init')
+    const model = await Vosk.createModel('model.tar.gz');
+        console.log('recognizer new:')
+
+    model.on('error', function(msg) {
+            console.log('model-error:',msg)
+        })
+    const recognizer = new model.KaldiRecognizer();
+    recognizer.on("result", (message) => {
+        console.log(`Result: ${message.result.text}`);
+    });
+    recognizer.on("partialresult", (message) => {
+        console.log(`Partial result: ${message.result.partial}`);
+    });
+    recognizer.on('error', function(msg) {
+            console.log('model-error:',msg)
+        })
+    const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: false,
+        audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            channelCount: 1,
+            sampleRate: 16000
+        },
+    });
+    console.log('mediaStream:',mediaStream)
+    
+    const audioContext = new AudioContext();
+    const recognizerNode = audioContext.createScriptProcessor(4096, 1, 1)
+    recognizerNode.onaudioprocess = (event) => {
+        try {
+            console.log('recognizerNode.onaudioprocess-event:',event)
+            recognizer.acceptWaveform(event.inputBuffer)
+        } catch (error) {
+            console.error('acceptWaveform failed', error)
+        }
+    }
+
+    console.log('recognizerNode:',recognizerNode)
+    const source = audioContext.createMediaStreamSource(mediaStream);
+    let node = source.connect(recognizerNode);
+    console.log('source:',source,node)
+}
+
+// window.onload = init;
+</script>

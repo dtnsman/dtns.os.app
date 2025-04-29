@@ -193,6 +193,14 @@ class DTNSManager
                 params.s_id = client.user_session.s_id
             }
         }
+        if(!params.user_id || !params.s_id)
+        {
+            if(window.g_user_session)
+            {
+                params.user_id = window.g_user_session.user_id
+                params.s_id = window.g_user_session.s_id
+            }
+        }
 
         console.log('run-params:'+dtnsUrl+' params:'+JSON.stringify(params))
         // if(url && url.indexOf('9000')) url = url.split('9000')[1]
