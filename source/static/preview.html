@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DTNS web3app HTML加载器</title>
+    <!-- 完整JS引用（严格按index.html顺序） -->
+    <script src="js/config.js"></script>
+    <script src="js/axios.min.js"></script>
+    <script src="js/simple-signal-client.min.js"></script>
+    <script src="js/socket.io.min.js"></script>
+    <script src="js/jszip.min.js"></script>
+    <script src="js/FileSaver.js"></script>
+    <script src="js/event_bus.js"></script>
+    <script src="js/rpc-client.js"></script>
+    <script src="js/DownloadManager.js"></script>
+    <script src="js/icache-db.js"></script>
+    <script src="js/ifile-db.js"></script>
+    <script src="js/image-db.js"></script>
+    <script src="js/static/pop_runtime2.js"></script>
+    <script src="js/static/libs/current-device.min.js"></script>
+    <script src="js/static/libs/bs58.bundle.js"></script>
+    <script src="js/static/libs/eccryptojs.js"></script>
+    <script src="js/static/libs/key_util_eccryptojs.js"></script>
+    <script src="js/static/sign_util.js"></script>
+    <script src="js/static/str_filter.js"></script>
+    <!-- <script src="js/preview.js"></script>
+    <script src="js/showdown/showdown.min.js"></script>
+    <link rel="stylesheet" href="js/showdown/github-markdown-light.css"> -->
+    <script src="js/DTNSManager.js"></script>
+    <script src="js/DChatManager.js"></script>
+
+    <script>
+
+        function getURLParams() {
+            console.log('getURLParams:', window.location.href);
+            let url = new URL(window.location.href);
+            let path = url.pathname;
+            let params = {};
+            for (const [key, value] of url.searchParams) {
+                params[key] = value;
+            }
+            console.log('getURLParams:', path, params, url);
+            return params;
+        }
+
+        async function queryUrls() {
+            let tnsUrls = await axios.get('https://static.dtns.top/tns-urls.json');
+            window.g_tns_urls = tnsUrls ? tnsUrls.data : null;
+
+            let turnUrls = await axios.get('https://static.dtns.top/turn-urls.json');
+            window.g_turn_urls = turnUrls ? turnUrls.data : null;
+            console.log('g_tns_urls:', g_tns_urls, 'g_turn_urls:', g_turn_urls);
+        }
+
+        /**
+         * 全屏图片绑定事件函数
+         * @param {HTMLImageElement} img 图片元素
+         */
+        function bindFullscreenToggle(img) {
+            const overlay = document.createElement('div');
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
+            overlay.style.display = 'none';
+            overlay.style.justifyContent = 'center';
+            overlay.style.alignItems = 'center';
+            overlay.style.zIndex = '9999';
+            overlay.style.cursor = 'zoom-out';
+
+            const fullscreenImg = document.createElement('img');
+            fullscreenImg.style.maxWidth = '90%';
+            fullscreenImg.style.maxHeight = '90%';
+            fullscreenImg.src = img.src;
+            fullscreenImg.alt = img.alt || '图片';
+            overlay.appendChild(fullscreenImg);
+            document.body.appendChild(overlay);
+
+            const handleClick = function(e) {
+                e.stopPropagation();
+                if (overlay.style.display === 'none') {
+                    fullscreenImg.src = img.src;
+                    overlay.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    overlay.style.display = 'none';
+                    document.body.style.overflow = '';
+                }
+            };
+
+            overlay.addEventListener('click', function() {
+                overlay.style.display = 'none';
+                document.body.style.overflow = '';
+            });
+
+            img.style.cursor = 'zoom-in';
+            img.addEventListener('click', handleClick);
+            return handleClick;
+        }
+
+        
+        window.loadDtnsImage = async function(el)
+        {
+            if(el  && el.src && el.src.startsWith('dtns://'))
+            {
+                // setImgPreview(el)
+                bindFullscreenToggle(el)
+                //加载缓存的图片或者远程加载图片
+                let img_id = el.src
+                let params = img_id && img_id.startsWith('dtns://') ? {}:{user_id:localStorage.user_id,s_id:localStorage.s_id,filename:img_id,img_kind:'open'}//,img_p:'min200'}
+                let reqUrl = img_id && img_id.startsWith('dtns://')  ? img_id.replace('&amp;','&') :'dtns://web3:'+rpc_client.roomid+'/image/view'
+                let isBaseUrl = img_id && img_id.startsWith('data:image/')
+
+                let item = await imageDb.getDataByKey(img_id)//localStorage.getItem('chatlogo-'+chatInfo.chatlogo)
+                console.log('loadDtnsImage-load-img:'+img_id)
+                //el.src = init.default
+                if(item && item.data){ el.src = item.data;}
+                else if(isBaseUrl){
+                el.src = img_id
+                }
+                else{
+                    // queryImg(reqUrl,params).then(async (data)=>{
+                    g_dtnsManager.run(reqUrl,params).then(async (data)=>{
+                    if(data && data.data)
+                    {
+                        el.src ='data:image/png;base64,'+data.data
+                        imageDb.addData({img_id,data:el.src })
+                    }
+                    // if(imageCatcheList.indexOf(src)<0) imageCatcheList.push(src)
+                    //setTimeout(()=>This.chatRexord =  This.chatRexord,100)
+                    }).catch((ex)=>{
+                        console.log('loadDtnsImage:load img error'+ex)
+                        // el.src = init.default
+                    })
+                //localStorage.setItem('chatlogo-'+chatInfo.chatlogo,chatInfo.img)
+                }
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('loaded')
+            // 初始化数据库（完整初始化流程）
+            const ifileDb = new IFileIndexDB('ifiledb','ifilecache');
+            await ifileDb.openDB();
+            window.ifileDb = ifileDb;
+
+            const iWalletDb = new IFileIndexDB('iwalletdb','iwalletcache');
+            await iWalletDb.openDB();
+            window.iWalletDb = iWalletDb;
+
+            const iSessionDb = new IFileIndexDB('isessiondb','isessioncache');
+            await iSessionDb.openDB();
+            window.iSessionDb = iSessionDb;
+            window.g_axios = axios;
+
+            const imageDb = new ImageIndexDB();
+            await imageDb.openDB();
+            window.imageDb = imageDb;
+
+            // 初始化DTNS管理器
+            const dtnsManager = new DTNSManager();
+            window.g_dtnsManager = dtnsManager;
+
+            const dchatManager = new DChatManager(dtnsManager);
+            window.g_dchatManager = dchatManager;
+            window.g_downManager = new DownloadManager();
+
+            await queryUrls();
+
+            const ib3hub = localStorage.getItem('now_roomid')
+
+
+            // 创建RPC客户端（完整初始化）
+            window.rpc_client = new RTCClient(ib3hub);
+            window.g_dtnsManager.addRPCClient(rpc_client);
+
+            try {
+                // 等待连接就绪（带重试机制）
+                // let testRet = await g_dtnsManager.run('dtns://web3:' + rpc_client.roomid + '/user/info', {});
+                // while (!testRet) {
+                //     await new Promise(resolve => setTimeout(resolve, 500));
+                //     testRet = await g_dtnsManager.run('dtns://web3:' + rpc_client.roomid + '/user/info', {});
+                // }
+
+                // 将获取的HTML内容写入页面
+                document.open();
+                let html = localStorage.getItem('preview-html-str')
+                localStorage.removeItem('preview-html-str')
+                html = html.replaceAll('<img ','<img onerror="loadDtnsImage(this)" ')
+                document.write(html);
+                document.close();
+            } catch (error) {
+                console.error('初始化g_dtnsManager失败:', error);
+            }
+        });
+    </script>
+</head>
+<body>
+</body>
+</html>

@@ -46,49 +46,44 @@
 	 </div>
    <van-divider />
    <div style="background-color:#fff; width:100%; height:50px;" @click="gotoDWebUserPage">
-      <div style="text-align:center; width:100% ;font-size:15px;padding:17px 0 0 0">
-      发布的头榜
-      </div>
+      <van-row>
+        <van-col span="11" style="text-align:right; padding-right:8px; padding-top:15px;">
+          🚀&nbsp;
+        </van-col>
+        <van-col span="13" style="text-align:left; padding-top:15px;">
+          <div style="font-size:15px;">发布的头榜</div>
+        </van-col>
+      </van-row>
    </div>
    <van-divider />
    <div v-if="forklist && forklist.length>0" style="background-color:#fff; width:100%; height:50px;">
-    <div style="text-align:center; width:100% ;font-size:15px;padding:17px 0 0 0">
-      持有的福刻FORK
-      </div>
+      <van-col span="11" style="text-align:right; padding-right:8px; padding-top:15px;">
+        ✨&nbsp;
+      </van-col>
+      <van-col span="13" style="text-align:left; padding-top:15px;">
+        <div style="font-size:15px;">持有的福刻FORK</div>
+      </van-col>
    </div>
    <div v-for="(item,index) in forklist" @click="come(index)"  :key="index" style="width:45%;float:left; margin-left:3%;position:relative;">
       <PopComponent style="width:100%;" :xitem="item" :zoom="0.45" :fullWidth="fullWidth">
       </PopComponent>  
-      <!-- <div style="width:100%;" @click="come(index)" >
-           @click="clickFull">
-                <div v-if="typeof item !='undefined'"
-                    class="canvas"
-                    :style="{
-                        ...getCanvasStyle(item.style),
-                        width: (item.style.width-10) + 'px',
-                        height: item.style.height + 'px',
-                        zoom:  (fullWidth)*0.45 / (item.style.width-10)   ,
-                        'transform-origin': 'left top'
-                    }">
-                      <ComponentWrapper
-                          v-for="(subitem, subindex) in item.data"
-                          :key="subindex"
-                          :config="subitem"
-                      />
-                </div>
-                <div v-else>
-                  [Error]ComponentWrapper-data-item is null
-                </div>
-        </div> -->
     </div>
 
 
   </div>
 
     <div @click="shareUser" style="text-align:center; position:fixed; width:100%; height:50px; background-color:#fff; bottom:0px;">
-      <div style="line-height:50px; font-size:15px; color:red;">
+      <!-- <div style="line-height:50px; font-size:15px; color:red;">
         推送至头榜
-      </div>
+      </div> -->
+      <van-row>
+        <van-col span="11" style="text-align:right; padding-right:8px; padding-top:15px;">
+          🚀&nbsp;
+        </van-col>
+        <van-col span="13" style="text-align:left; padding-top:15px;">
+          <div style="font-size:15px; "><b>推送至头榜</b></div>
+        </van-col>
+      </van-row>
     </div>
     <!--举报该用户-->
     

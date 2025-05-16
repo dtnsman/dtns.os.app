@@ -35,6 +35,7 @@ window.loadDtnsImage = async function(el)
 {
   if(el  && el.src && el.src.startsWith('dtns://'))
   {
+    bindFullscreenToggle(el)
     //加载缓存的图片或者远程加载图片
     let img_id = el.src
     let params = img_id && img_id.startsWith('dtns://') ? {}:{user_id:localStorage.user_id,s_id:localStorage.s_id,filename:img_id,img_kind:'open'}//,img_p:'min200'}
@@ -66,6 +67,65 @@ window.loadDtnsImage = async function(el)
     }
   }
 }
+
+/**
+ * 全屏图片绑定事件函数
+ * @param {*} img 
+ * @returns 
+ */
+function bindFullscreenToggle(img) {
+    // 创建全屏显示的覆盖层
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
+    overlay.style.display = 'none';
+    overlay.style.justifyContent = 'center';
+    overlay.style.alignItems = 'center';
+    overlay.style.zIndex = '9999';
+    overlay.style.cursor = 'zoom-out';
+  
+    // 创建全屏图片元素
+    const fullscreenImg = document.createElement('img');
+    fullscreenImg.style.maxWidth = '90%';
+    fullscreenImg.style.maxHeight = '90%';
+    fullscreenImg.style.objectFit = 'contain';
+    overlay.appendChild(fullscreenImg);
+    document.body.appendChild(overlay);
+  
+    // 点击事件处理函数
+    const handleClick = function(e) {
+      e.stopPropagation(); // 阻止事件冒泡
+  
+      if (overlay.style.display === 'none') {
+        // 进入全屏
+        fullscreenImg.src = img.src;
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // 防止页面滚动
+      } else {
+        // 退出全屏
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+    };
+  
+    // 点击覆盖层也退出全屏
+    overlay.addEventListener('click', function() {
+      overlay.style.display = 'none';
+      document.body.style.overflow = '';
+    });
+  
+    // 绑定点击事件
+    img.style.cursor = 'zoom-in';
+    img.addEventListener('click', handleClick);
+  
+    // 返回事件处理函数以便解绑
+    return handleClick;
+  }
+  
 
 //用于backDb-订阅dnalink.node节点
 const ifileDb = new IFileIndexDB('ifiledb','ifilecache')

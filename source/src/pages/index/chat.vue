@@ -2295,6 +2295,7 @@ export default {
               let blob =  new Blob([codeStr], { type: 'text/html' });
               window.preview_html_url = window.URL.createObjectURL(blob)
               gotoInfo = {'title':'网页预览',news_url:'html'}
+              window.preview_html_str = codeStr //2025-5-16强制使用document.write的方式来实现（调用的是preview.html）
             }
             localStorage.setItem('goto-http',JSON.stringify(gotoInfo))
             this.$router.push('/http')
@@ -3777,8 +3778,10 @@ export default {
             let params = {filename:session_file_id}
             
             //2025-3-26，参数会用 file_id加速recover-history（不传递history——避免image_url是base64图片，上传参数过大导致超时30s）
-            let ret = session_file_id.indexOf('folder') >0 ? 
-               await g_dtnsManager.run('dtns://web3:'+rpc_client.roomid+'/rtkown/chat',{folder_id:params.filename}) : 
+            let ret = session_file_id.indexOf('folder') >=0 ? 
+               await g_dtnsManager.run('dtns://web3:'+rpc_client.roomid+'/rtkown/chat',
+                {folder_id: session_file_id.startsWith('folder:') ? 
+                  session_file_id.substring('folder:'.length,session_file_id.length) : params.filename}) : 
                await g_dtnsManager.run('dtns://web3:'+rpc_client.roomid+'/rtibchat/session/recover',{file_id:params.filename})//{history:JSON.stringify(sessionInfo.history)})
             if(!ret || !ret.ret) return this.$toast('恢复会话失败！原因：'+(ret ? ret.msg:'未知网络原因'))
             //如有旧会话先关闭

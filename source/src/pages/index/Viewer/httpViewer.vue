@@ -107,30 +107,21 @@
         try{
             this.httpInfo = JSON.parse(localStorage.getItem('goto-http'))
             //2025-3-26支持html代码预览功能（ibchat中需求）
-            if(this.httpInfo && this.httpInfo.news_url=='preview')
+            if(this.httpInfo && this.httpInfo.news_url=='preview' || this.httpInfo && this.httpInfo.news_url=='html')
             {
               this.preview_flag = true
               localStorage.removeItem('goto-http')
-              setTimeout(async ()=>{
-                while(!This.$refs.httpIF || !This.$refs.httpIF.contentDocument) await new Promise((resolve)=>setTimeout(resolve,30))
-                const doc = This.$refs.httpIF.contentDocument;
-                let str = window.preview_html_str
-                window.preview_html_str= null
-                try{
-                    doc.write(str)
-                }catch(ex)
-                {
-                    alert('htmlViewer-doc-write:ex:'+ex)
-                }
-              },100)
+              localStorage.setItem('preview-html-str',window.preview_html_str)
+              while(!This.$refs.httpIF || !This.$refs.httpIF.contentDocument) await new Promise((resolve)=>setTimeout(resolve,30))
+              This.$refs.httpIF.src = 'static/preview.html'
             }
-            else if(this.httpInfo && this.httpInfo.news_url=='html')
-            {
-              this.preview_flag = false
-              localStorage.removeItem('goto-http')
-              this.httpInfo.news_url = window.preview_html_url
-              window.preview_html_url= null
-            }
+            // else if(this.httpInfo && this.httpInfo.news_url=='html')
+            // {
+            //   this.preview_flag = false
+            //   localStorage.removeItem('goto-http')
+            //   this.httpInfo.news_url = window.preview_html_url
+            //   window.preview_html_url= null
+            // }
         }catch(ex){
             console.log('parse-httpInfo-ex:'+ex,ex)
         }
